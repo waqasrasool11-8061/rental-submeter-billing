@@ -1,0 +1,1838 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>رینٹل سب میٹر اینڈ بلنگ مینیجر | Rental Billing Portal</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Noto Naskh Arabic & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    body {
+      font-family: 'Noto Naskh Arabic', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      letter-spacing: 0.01em;
+      line-height: 1.6;
+    }
+    .en-slip {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      direction: ltr !important;
+      text-align: left !important;
+    }
+    .tenant-mode .admin-only,
+    .tenant-mode .owner-only {
+      display: none !important;
+    }
+    .tenant-mode input:not([type="button"]):not([type="submit"]),
+    .tenant-mode select.admin-field,
+    .tenant-mode select.owner-field {
+      pointer-events: none !important;
+      background-color: #f1f5f9 !important;
+      color: #334155 !important;
+      border-color: #cbd5e1 !important;
+    }
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #printable-slip, #printable-slip * {
+        visibility: visible;
+      }
+      #printable-slip {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+      }
+    }
+    /* Smooth transitions and touch-friendly */
+    input, select, button {
+      touch-action: manipulation;
+    }
+  </style>
+</head>
+<body class="bg-slate-100/90 text-slate-800 antialiased min-h-screen pb-16">
+
+  <!-- ================= ٹاپ ہیڈر مع اکاؤنٹ سوئچر ================= -->
+  <header class="bg-emerald-900 text-white shadow-md sticky top-0 z-40 border-b border-emerald-800">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-3">
+      
+      <!-- برانڈنگ لوگو و ٹائٹل -->
+      <div class="flex items-center space-x-3 space-x-reverse">
+        <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-600 to-emerald-800 flex items-center justify-center text-xl shadow-md border border-emerald-500/40">
+          <i class="fa-solid fa-bolt-lightning text-amber-300"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-base sm:text-lg font-black tracking-wide text-white">رینٹل سب میٹر اینڈ بلنگ مینیجر</h1>
+            <span class="hidden md:inline-flex items-center gap-1 bg-emerald-800/80 text-emerald-200 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-700 font-mono">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Cloud Live
+            </span>
+          </div>
+          <p class="text-xs text-emerald-200 font-medium">واپڈا 2 میٹر اوسط ریٹ و کرائے دار سب میٹر خودکار حساب سسٹم</p>
+        </div>
+      </div>
+      
+      <!-- کنٹرولز: اکاؤنٹ سوئچر اور مہینہ سلیکٹر -->
+      <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+        
+        <!-- اکاؤنٹ سوئچر (ایڈمن و کرائے دار) -->
+        <div class="flex items-center bg-emerald-950/90 p-1 rounded-xl border border-emerald-600/50 text-xs shadow-inner">
+          <button type="button" id="roleBtnAdmin" onclick="promptLogin('admin')" class="px-3 py-1.5 rounded-lg font-extrabold transition bg-amber-400 text-slate-900 shadow-sm flex items-center gap-1.5">
+            <i class="fa-solid fa-user-gear text-[12px] text-amber-950"></i> ایڈمن اکاؤنٹ
+          </button>
+          <button type="button" id="roleBtnTenant" onclick="promptLogin('tenant')" class="px-3 py-1.5 rounded-lg font-extrabold transition text-emerald-200 hover:text-white flex items-center gap-1.5">
+            <i class="fa-solid fa-user text-[11px]"></i> کرائے دار اکاؤنٹ
+          </button>
+        </div>
+
+        <!-- بلنگ مہینہ سلیکٹر -->
+        <div class="flex items-center gap-1.5 bg-emerald-950/90 px-2.5 py-1 rounded-xl border border-emerald-600/50 text-xs shadow-inner">
+          <i class="fa-regular fa-calendar-check text-emerald-300"></i>
+          
+          <select id="billingMonthSelect" onchange="onMonthOrYearChanged()" class="bg-white text-slate-900 font-extrabold px-2.5 py-1 rounded-lg border border-slate-300 focus:outline-none cursor-pointer text-xs shadow-xs">
+            <option value="January" data-idx="0" data-code="Jan">January</option>
+            <option value="February" data-idx="1" data-code="Feb">February</option>
+            <option value="March" data-idx="2" data-code="Mar">March</option>
+            <option value="April" data-idx="3" data-code="Apr">April</option>
+            <option value="May" data-idx="4" data-code="May">May</option>
+            <option value="June" data-idx="5" data-code="Jun">June</option>
+            <option value="July" data-idx="6" data-code="Jul">July</option>
+            <option value="August" data-idx="7" data-code="Aug">August</option>
+            <option value="September" data-idx="8" data-code="Sep">September</option>
+            <option value="October" data-idx="9" data-code="Oct" selected>October</option>
+            <option value="November" data-idx="10" data-code="Nov">November</option>
+            <option value="December" data-idx="11" data-code="Dec">December</option>
+          </select>
+
+          <select id="billingYearSelect" onchange="onMonthOrYearChanged()" class="bg-white text-slate-900 font-extrabold px-2 py-1 rounded-lg border border-slate-300 focus:outline-none cursor-pointer text-xs shadow-xs">
+            <option value="2025">2025</option>
+            <option value="2026" selected>2026</option>
+            <option value="2027">2027</option>
+          </select>
+        </div>
+
+      </div>
+
+    </div>
+  </header>
+
+  <!-- ایکٹو اکاؤنٹ انفارمیشن بینر -->
+  <div id="roleIndicatorBanner" class="bg-amber-100 border-b border-amber-300 text-amber-950 py-1.5 px-4 text-xs font-bold text-center flex items-center justify-center gap-2 shadow-xs">
+    <i class="fa-solid fa-crown text-amber-600"></i>
+    <span>آپ <strong>ایڈمن اکاؤنٹ (Admin Mode)</strong> میں لاگ ان ہیں۔ تمام فیلڈز اور اختیارات فعال ہیں۔</span>
+  </div>
+
+  <!-- مین کنٹینر (وائیڈ ڈیسک ٹاپ + فلوئڈ موبائل رسپانسیو) -->
+  <main class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 mt-4 sm:mt-6">
+
+    <!-- فوری کوئیک لنکس و ٹول بار -->
+    <div class="flex flex-wrap items-center justify-between gap-3 bg-white p-3 sm:p-4 rounded-2xl border border-slate-200/90 shadow-sm mb-5">
+      <div class="flex items-center gap-2">
+        <span class="text-xs sm:text-sm font-black text-slate-800 flex items-center gap-1.5">
+          <i class="fa-solid fa-layer-group text-emerald-700"></i> شارٹ کٹس و کلاؤڈ ریکارڈز:
+        </span>
+      </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <!-- سب میٹر ہسٹری بٹن -->
+        <button type="button" onclick="openHistoryModal()" class="text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-900 font-extrabold px-3 py-1.5 rounded-xl border border-indigo-200 flex items-center gap-1.5 transition active:scale-95 shadow-xs">
+          <i class="fa-solid fa-chart-line text-indigo-600"></i> سب میٹر ریڈنگ ریکارڈ
+        </button>
+
+        <!-- ایڈوانس لیجر بٹن -->
+        <button type="button" onclick="openLedgerModal()" class="text-xs bg-rose-50 hover:bg-rose-100 text-rose-900 font-extrabold px-3 py-1.5 rounded-xl border border-rose-200 flex items-center gap-1.5 transition active:scale-95 shadow-xs">
+          <i class="fa-solid fa-book-bookmark text-rose-600"></i> ایڈوانس ٹریکنگ لیجر
+          <span class="bg-rose-600 text-white text-[11px] font-black px-2 py-0.5 rounded-full" id="topLedgerBalanceBadge">Rs. 20,000</span>
+        </button>
+
+        <!-- کلاؤڈ سنک / ڈیٹا مینیجر -->
+        <button type="button" onclick="openCloudModal()" class="text-xs bg-sky-50 hover:bg-sky-100 text-sky-900 font-extrabold px-3 py-1.5 rounded-xl border border-sky-200 flex items-center gap-1.5 transition active:scale-95 shadow-xs">
+          <i class="fa-solid fa-cloud-arrow-up text-sky-600"></i> کلاؤڈ بیک اپ و سنک
+        </button>
+
+        <!-- محفوظ شدہ بلز لنک -->
+        <a href="#savedBillsSection" class="text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-900 font-extrabold px-3 py-1.5 rounded-xl border border-emerald-200 flex items-center gap-1.5 transition active:scale-95 shadow-xs">
+          <i class="fa-solid fa-box-archive text-emerald-700"></i> محفوظ بلز آرکائیو
+        </a>
+      </div>
+    </div>
+
+    <!-- ٹاپ کے پی آئی سمری کارڈز (4 اہم اعداد و شمار) -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6">
+      
+      <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div>
+          <span class="text-[11px] font-bold text-slate-500 block">بلنگ مہینہ</span>
+          <span class="text-sm sm:text-base font-black text-slate-900 font-mono" id="kpiMonth">October 2026</span>
+        </div>
+        <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center text-lg">
+          <i class="fa-regular fa-calendar-days"></i>
+        </div>
+      </div>
+
+      <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div>
+          <span class="text-[11px] font-bold text-slate-500 block">واپڈا مشترکہ یونٹ ریٹ</span>
+          <span class="text-sm sm:text-base font-black text-amber-700 font-mono">Rs. <span id="kpiRate">23.44</span></span>
+        </div>
+        <div class="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-lg">
+          <i class="fa-solid fa-bolt"></i>
+        </div>
+      </div>
+
+      <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div>
+          <span class="text-[11px] font-bold text-slate-500 block">سب میٹر استعمال شدہ یونٹس</span>
+          <span class="text-sm sm:text-base font-black text-emerald-800 font-mono"><span id="kpiUnits">29</span> Units</span>
+        </div>
+        <div class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-700 flex items-center justify-center text-lg">
+          <i class="fa-solid fa-gauge-high"></i>
+        </div>
+      </div>
+
+      <div class="bg-gradient-to-br from-emerald-800 to-emerald-950 text-white p-3.5 sm:p-4 rounded-2xl shadow-sm flex items-center justify-between">
+        <div>
+          <span class="text-[11px] font-bold text-emerald-200 block">خالص واجب الادا بل</span>
+          <span class="text-base sm:text-lg font-black text-yellow-300 font-mono tracking-tight">Rs. <span id="kpiGrandTotal">1,827</span></span>
+        </div>
+        <div class="w-9 h-9 rounded-xl bg-white/10 text-yellow-300 flex items-center justify-center text-lg shadow-inner">
+          <i class="fa-solid fa-money-bill-wave"></i>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ٹوسٹ نوٹیفکیشن الرٹ -->
+    <div id="saveToast" class="hidden mb-4 p-3.5 bg-emerald-700 text-white rounded-xl shadow-lg flex items-center justify-between">
+      <div class="flex items-center gap-2.5 text-xs font-bold">
+        <i class="fa-solid fa-circle-check text-lg text-emerald-200"></i>
+        <span id="saveToastText">بل کامیابی سے محفوظ کر لیا گیا ہے!</span>
+      </div>
+      <button onclick="document.getElementById('saveToast').classList.add('hidden')" class="text-white hover:text-emerald-200 p-1">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <!-- ================= مین ڈیش بورڈ گرڈ (7 کالمز ان پٹ + 5 کالمز لائیو رسید) ================= -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+      <!-- کالم 1: تمام کنٹرولز اور ان پٹ فارمز (7 کالمز) -->
+      <div class="lg:col-span-7 space-y-6">
+
+        <!-- کرائے دار کی بنیادی معلومات -->
+        <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200">
+          <div class="flex items-center justify-between mb-3 border-b border-slate-100 pb-2.5">
+            <h2 class="text-sm sm:text-base font-extrabold text-slate-900 flex items-center gap-2">
+              <i class="fa-solid fa-user-check text-emerald-700"></i> کرائے دار اور بلنگ کی بنیادی تفصیلات
+            </h2>
+            <span class="text-xs bg-emerald-50 text-emerald-800 px-2.5 py-1 rounded-full border border-emerald-200 font-bold" id="currentMonthBadge">Month: October 2026</span>
+          </div>
+          
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">کرائے دار کا نام</label>
+              <input type="text" id="tenantName" value="احسان اللہ" oninput="calculateAll()"
+                class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 font-bold text-slate-900 text-xs sm:text-sm">
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">سب میٹر نمبر (Sub-Meter ID)</label>
+              <input type="text" id="tenantMeterNo" value="0027710" oninput="onRefNumberChanged()"
+                class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 font-bold text-slate-900 font-mono text-xs sm:text-sm">
+            </div>
+          </div>
+        </div>
+
+        <!-- کارڈ 2: واپڈا 2 میٹرز کا مشترکہ حساب و کیمرہ تصدیق -->
+        <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200 space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
+            <div>
+              <h2 class="text-sm sm:text-base font-extrabold text-slate-900 flex items-center gap-2">
+                <i class="fa-solid fa-bolt text-amber-500"></i> واپڈا 2 میٹرز کا مشترکہ حساب (15 دن بعد گردش)
+              </h2>
+              <p class="text-[11px] text-slate-500 font-medium">دونوں میٹروں کے کل بل اور کل یونٹس سے خودکار اوسط فی یونٹ ریٹ نکلے گا</p>
+            </div>
+            <span class="text-[11px] font-bold bg-amber-100 text-amber-900 px-2.5 py-0.5 rounded-full border border-amber-300">خودکار اوسط ریٹ</span>
+          </div>
+
+          <!-- دونوں میٹرز کا گرڈ -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            
+            <!-- میٹر 1: ریفرنس 18143170401500 -->
+            <div class="bg-amber-50/60 p-3.5 rounded-xl border border-amber-200/90 space-y-2.5">
+              <div class="flex items-center justify-between border-b border-amber-200/80 pb-1.5">
+                <span class="font-bold text-xs text-amber-950 flex items-center gap-1">
+                  <span class="w-2 h-2 rounded-full bg-amber-500"></span> واپڈا میٹر 1 (پہلے 15 دن)
+                </span>
+                <!-- کیمرہ بٹن (ایڈمن کے لیے) -->
+                <button type="button" onclick="triggerCamera('m1BillPhoto')" class="admin-only owner-only text-[11px] bg-white hover:bg-amber-100 text-amber-900 px-2 py-0.5 rounded-lg border border-amber-300 font-bold flex items-center gap-1 shadow-2xs transition">
+                  <i class="fa-solid fa-camera text-amber-600"></i> <span id="m1PhotoLabel">بل تصویر</span>
+                </button>
+                <input type="file" id="m1BillPhoto" accept="image/*" capture="environment" class="hidden" onchange="handlePhotoCapture('m1BillPhoto', 'm1PhotoLabel', 'm1Preview')">
+              </div>
+
+              <div>
+                <label class="block text-[11px] font-bold text-slate-700 mb-0.5">ریفرنس نمبر (Reference No)</label>
+                <input type="text" id="m1MeterNumber" value="18143170401500" placeholder="میٹر 1 کا ریفرنس نمبر..." oninput="onRefNumberChanged()"
+                  class="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-bold text-slate-800 font-mono">
+              </div>
+
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-[11px] font-bold text-slate-700 mb-0.5">کل یونٹس</label>
+                  <input type="number" id="m1Units" value="139" oninput="calculateAll()"
+                    class="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs sm:text-sm font-bold focus:ring-1 focus:ring-amber-500 font-mono">
+                </div>
+                <div>
+                  <label class="block text-[11px] font-bold text-slate-700 mb-0.5">کل بل (PKR)</label>
+                  <input type="number" id="m1Bill" value="3254" oninput="calculateAll()"
+                    class="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs sm:text-sm font-bold focus:ring-1 focus:ring-amber-500 font-mono">
+                </div>
+              </div>
+
+              <!-- تصویر پریویو -->
+              <div id="m1Preview" class="pt-0.5">
+                <div class="flex items-center justify-between bg-white/90 p-1.5 rounded-lg border border-amber-300 text-[11px]">
+                  <span class="text-emerald-700 font-bold"><i class="fa-solid fa-circle-check text-xs"></i> بل فوٹو تصدیق</span>
+                  <button type="button" onclick="viewPhoto('m1BillPhoto')" class="text-amber-800 font-bold underline">دیکھیں</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- میٹر 2: ریفرنس 18143170401550 -->
+            <div class="bg-amber-50/60 p-3.5 rounded-xl border border-amber-200/90 space-y-2.5">
+              <div class="flex items-center justify-between border-b border-amber-200/80 pb-1.5">
+                <span class="font-bold text-xs text-amber-950 flex items-center gap-1">
+                  <span class="w-2 h-2 rounded-full bg-amber-600"></span> واپڈا میٹر 2 (دوسرے 15 دن)
+                </span>
+                <!-- کیمرہ بٹن -->
+                <button type="button" onclick="triggerCamera('m2BillPhoto')" class="admin-only owner-only text-[11px] bg-white hover:bg-amber-100 text-amber-900 px-2 py-0.5 rounded-lg border border-amber-300 font-bold flex items-center gap-1 shadow-2xs transition">
+                  <i class="fa-solid fa-camera text-amber-600"></i> <span id="m2PhotoLabel">بل تصویر</span>
+                </button>
+                <input type="file" id="m2BillPhoto" accept="image/*" capture="environment" class="hidden" onchange="handlePhotoCapture('m2BillPhoto', 'm2PhotoLabel', 'm2Preview')">
+              </div>
+
+              <div>
+                <label class="block text-[11px] font-bold text-slate-700 mb-0.5">ریفرنس نمبر (Reference No)</label>
+                <input type="text" id="m2MeterNumber" value="18143170401550" placeholder="میٹر 2 کا ریفرنس نمبر..." oninput="onRefNumberChanged()"
+                  class="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-bold text-slate-800 font-mono">
+              </div>
+
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-[11px] font-bold text-slate-700 mb-0.5">کل یونٹس</label>
+                  <input type="number" id="m2Units" value="140" oninput="calculateAll()"
+                    class="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs sm:text-sm font-bold focus:ring-1 focus:ring-amber-500 font-mono">
+                </div>
+                <div>
+                  <label class="block text-[11px] font-bold text-slate-700 mb-0.5">کل بل (PKR)</label>
+                  <input type="number" id="m2Bill" value="3286" oninput="calculateAll()"
+                    class="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs sm:text-sm font-bold focus:ring-1 focus:ring-amber-500 font-mono">
+                </div>
+              </div>
+
+              <!-- تصویر پریویو -->
+              <div id="m2Preview" class="pt-0.5">
+                <div class="flex items-center justify-between bg-white/90 p-1.5 rounded-lg border border-amber-300 text-[11px]">
+                  <span class="text-emerald-700 font-bold"><i class="fa-solid fa-circle-check text-xs"></i> بل فوٹو تصدیق</span>
+                  <button type="button" onclick="viewPhoto('m2BillPhoto')" class="text-amber-800 font-bold underline">دیکھیں</button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- اوسط سمری سٹرپ -->
+          <div class="bg-amber-100/80 p-3 rounded-xl border border-amber-300 text-xs flex flex-wrap items-center justify-between gap-2 font-bold text-amber-950">
+            <div>
+              <span>مجموعی یونٹس: <span id="sumWapdaUnits" class="font-mono font-black text-amber-900">279</span></span>
+              <span class="mx-2">•</span>
+              <span>مجموعی بل: Rs. <span id="sumWapdaBill" class="font-mono font-black text-amber-900">6,540</span></span>
+            </div>
+            <div class="bg-amber-200/90 px-3 py-1 rounded-lg border border-amber-400">
+              <span>فی یونٹ ریٹ (6540 ÷ 279): <strong class="font-mono text-sm text-slate-900">Rs. <span id="calculatedUnitRate">23.44</span></strong></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- کارڈ 3: کرائے دار سب میٹر ریڈنگ و یونٹس حساب -->
+        <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200 space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
+            <div>
+              <h2 class="text-sm sm:text-base font-extrabold text-slate-900 flex items-center gap-2">
+                <i class="fa-solid fa-gauge-high text-emerald-700"></i> سب میٹر ریڈنگ و یونٹس حساب (احسان اللہ)
+              </h2>
+              <span id="readingSyncStatusBadge" class="text-[11px] text-emerald-700 font-bold block mt-0.5">
+                <i class="fa-solid fa-link ml-1"></i> سب میٹر ریکارڈ (Oct-26) سے خودکار تصدیق شدہ
+              </span>
+            </div>
+
+            <!-- کیمرہ بٹن سب میٹر کے لیے -->
+            <button type="button" onclick="triggerCamera('submeterPhoto')" class="admin-only owner-only text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-900 px-2.5 py-1 rounded-xl border border-emerald-300 font-bold flex items-center gap-1 shadow-2xs transition">
+              <i class="fa-solid fa-camera text-emerald-700"></i> <span id="subPhotoLabel">سب میٹر فوٹو لیں</span>
+            </button>
+            <input type="file" id="submeterPhoto" accept="image/*" capture="environment" class="hidden" onchange="handlePhotoCapture('submeterPhoto', 'subPhotoLabel', 'submeterPreview')">
+          </div>
+
+          <!-- ریڈنگ ان پٹس -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">سابقہ ریڈنگ (Previous Reading)</label>
+              <input type="number" id="tenantPrevReading" value="2121" oninput="calculateAll()"
+                class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 font-bold text-slate-900 font-mono text-xs sm:text-sm">
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">موجودہ ریڈنگ (Current Reading)</label>
+              <input type="number" id="tenantCurrReading" value="2150" oninput="calculateAll()"
+                class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 font-bold text-slate-900 font-mono text-xs sm:text-sm">
+            </div>
+          </div>
+
+          <!-- سب میٹر تصویر پریویو -->
+          <div id="submeterPreview" class="pt-0.5">
+            <div class="flex items-center justify-between bg-emerald-50/80 p-2 rounded-xl border border-emerald-200 text-xs font-bold text-emerald-900">
+              <span><i class="fa-solid fa-image text-emerald-700 ml-1"></i> سب میٹر ریڈنگ فوٹو منسلک ہے</span>
+              <button type="button" onclick="viewPhoto('submeterPhoto')" class="underline text-emerald-800">تصویر دیکھیں</button>
+            </div>
+          </div>
+
+          <!-- وارننگ اگر ریڈنگ خالی ہو -->
+          <div id="missingReadingWarning" class="hidden p-3 bg-amber-50 rounded-xl border border-amber-300 text-xs text-amber-900 flex items-center gap-2">
+            <i class="fa-solid fa-triangle-exclamation text-amber-600 text-base"></i>
+            <span>اس منتخب مہینے کی سب میٹر ریڈنگ ابھی درج نہیں ہے۔ براہ کرم اوپر ریڈنگ درج کریں یا ریڈنگ ریکارڈ میں شامل کریں۔</span>
+          </div>
+
+          <!-- یونٹس و بل کا نتیجہ -->
+          <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200 grid grid-cols-2 gap-3 text-center">
+            <div>
+              <span class="text-[11px] text-slate-500 font-bold block">استعمال شدہ یونٹس</span>
+              <span class="text-base sm:text-lg font-black text-slate-900 font-mono"><span id="tenantUnitsConsumed">29</span> Units</span>
+            </div>
+            <div>
+              <span class="text-[11px] text-slate-500 font-bold block">سب میٹر بجلی بل (یونٹس × <span id="appliedRateLabel">23.44</span>)</span>
+              <span class="text-base sm:text-lg font-black text-amber-800 font-mono">Rs. <span id="tenantElecCost">680</span></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- کارڈ 4: ماہانہ یوٹیلیٹیز و کرایہ تفصیلات -->
+        <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200 space-y-4">
+          <div class="border-b border-slate-100 pb-2.5">
+            <h2 class="text-sm sm:text-base font-extrabold text-slate-900 flex items-center gap-2">
+              <i class="fa-solid fa-house text-emerald-700"></i> ماہانہ یوٹیلیٹیز، کرایہ و سروسز
+            </h2>
+            <p class="text-[11px] text-slate-500 font-medium">پانی اور گیس کے بلوں کا ایک تہائی (1/3) حصہ خودکار لاگو ہوتا ہے</p>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            
+            <!-- پانی کا بل (WASA 1/3) -->
+            <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-700 flex items-center gap-1">
+                  <i class="fa-solid fa-faucet-drip text-cyan-600"></i> واسا / پانی بل (1/3 حصہ)
+                </span>
+                <button type="button" onclick="triggerCamera('wasaBillPhoto')" class="admin-only owner-only text-[10px] bg-white text-cyan-800 px-1.5 py-0.5 rounded border border-cyan-300 font-bold">
+                  <i class="fa-solid fa-camera"></i> <span id="wasaPhotoLabel">بل فوٹو</span>
+                </button>
+                <input type="file" id="wasaBillPhoto" accept="image/*" capture="environment" class="hidden" onchange="handlePhotoCapture('wasaBillPhoto', 'wasaPhotoLabel', 'wasaPreview')">
+              </div>
+
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-[10px] font-bold text-slate-500">کل واسا بل</label>
+                  <input type="number" id="wasaTotalBill" placeholder="کل بل..." oninput="onWasaTotalInput()"
+                    class="w-full px-2 py-1 bg-white border border-slate-300 rounded-lg text-xs font-bold font-mono">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold text-cyan-800">1/3 حصہ (لاگو)</label>
+                  <input type="number" id="waterShareFinal" value="347" oninput="calculateAll()"
+                    class="w-full px-2 py-1 bg-cyan-50 border border-cyan-300 rounded-lg text-xs font-black text-cyan-950 font-mono">
+                </div>
+              </div>
+
+              <div id="wasaPreview" class="pt-0.5">
+                <div class="flex items-center justify-between bg-white p-1 rounded border border-cyan-200 text-[10px]">
+                  <span class="text-cyan-800 font-bold">تصویر منسلک ہے</span>
+                  <button type="button" onclick="viewPhoto('wasaBillPhoto')" class="underline text-cyan-900 font-bold">دیکھیں</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- گیس بل (Sui Gas 1/3) -->
+            <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-700 flex items-center gap-1">
+                  <i class="fa-solid fa-fire text-amber-600"></i> سوئی گیس بل (1/3 حصہ)
+                </span>
+                <button type="button" onclick="triggerCamera('gasBillPhoto')" class="admin-only owner-only text-[10px] bg-white text-amber-800 px-1.5 py-0.5 rounded border border-amber-300 font-bold">
+                  <i class="fa-solid fa-camera"></i> <span id="gasPhotoLabel">بل فوٹو</span>
+                </button>
+                <input type="file" id="gasBillPhoto" accept="image/*" capture="environment" class="hidden" onchange="handlePhotoCapture('gasBillPhoto', 'gasPhotoLabel', 'gasPreview')">
+              </div>
+
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-[10px] font-bold text-slate-500">کل گیس بل</label>
+                  <input type="number" id="gasTotalBill" placeholder="کل بل..." oninput="onGasTotalInput()"
+                    class="w-full px-2 py-1 bg-white border border-slate-300 rounded-lg text-xs font-bold font-mono">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold text-amber-800">1/3 حصہ (لاگو)</label>
+                  <input type="number" id="gasShareFinal" value="410" oninput="calculateAll()"
+                    class="w-full px-2 py-1 bg-amber-50 border border-amber-300 rounded-lg text-xs font-black text-amber-950 font-mono">
+                </div>
+              </div>
+
+              <div id="gasPreview" class="pt-0.5">
+                <div class="flex items-center justify-between bg-white p-1 rounded border border-amber-200 text-[10px]">
+                  <span class="text-amber-800 font-bold">تصویر منسلک ہے</span>
+                  <button type="button" onclick="viewPhoto('gasBillPhoto')" class="underline text-amber-900 font-bold">دیکھیں</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- ہاؤس رینٹ (مکان کا کرایہ) -->
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">مکان کا کرایہ (House Rent)</label>
+              <input type="number" id="baseRent" value="9000" oninput="calculateAll()"
+                class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 font-bold text-slate-900 font-mono text-xs sm:text-sm">
+            </div>
+
+            <!-- انٹرنیٹ بل -->
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">انٹرنیٹ چارجز (Internet)</label>
+              <input type="number" id="internetCharge" value="1500" oninput="calculateAll()"
+                class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 font-bold text-slate-900 font-mono text-xs sm:text-sm">
+            </div>
+
+            <!-- الیکٹرک موٹر / مینٹیننس -->
+            <div class="sm:col-span-2">
+              <label class="block text-xs font-bold text-slate-700 mb-1">الیکٹرک موٹر / مرمت چارجز</label>
+              <input type="number" id="motorMaintenanceCharge" value="300" oninput="calculateAll()"
+                class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 font-bold text-slate-900 font-mono text-xs sm:text-sm">
+            </div>
+
+          </div>
+        </div>
+
+        <!-- کارڈ 5: متفرق کٹوتی و ایڈوانس ایڈجسٹمنٹ -->
+        <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200 space-y-4">
+          <div class="border-b border-slate-100 pb-2.5">
+            <h2 class="text-sm sm:text-base font-extrabold text-slate-900 flex items-center gap-2">
+              <i class="fa-solid fa-scissors text-rose-600"></i> متفرق کٹوتیاں و ایڈوانس ایڈجسٹمنٹ
+            </h2>
+            <p class="text-[11px] text-slate-500 font-medium">گندم پسوائی یا کسی بھی قسم کی کٹوتی درج کریں، اور ماہانہ ایڈوانس ایڈجسٹ کریں</p>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            
+            <!-- کٹوتی کا نام -->
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">کٹوتی کی تفصیل / نام</label>
+              <input type="text" id="deductionName" value="گندم پسوائی" placeholder="مثلاً: گندم پسوائی، الیکٹرک کام..." oninput="calculateAll()"
+                class="w-full px-3 py-2 bg-rose-50/50 border border-rose-200 rounded-xl focus:ring-2 focus:ring-rose-500 font-bold text-slate-900 text-xs sm:text-sm">
+            </div>
+
+            <!-- کٹوتی کی رقم -->
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">کٹوتی کی رقم (PKR)</label>
+              <input type="number" id="deductionAmount" value="400" oninput="calculateAll()"
+                class="w-full px-3 py-2 bg-rose-50/50 border border-rose-200 rounded-xl focus:ring-2 focus:ring-rose-500 font-bold text-rose-800 font-mono text-xs sm:text-sm">
+            </div>
+
+            <!-- ایڈوانس ایڈجسٹمنٹ اس مہینے کی -->
+            <div class="sm:col-span-2 bg-rose-50/70 p-3.5 rounded-xl border border-rose-200 space-y-2">
+              <div class="flex items-center justify-between">
+                <label class="text-xs font-bold text-rose-950 flex items-center gap-1.5">
+                  <i class="fa-solid fa-hand-holding-dollar text-rose-600"></i> اس مہینے ایڈوانس کٹوتی (Advance If Paid)
+                </label>
+                <button type="button" onclick="openLedgerModal()" class="text-[11px] text-rose-700 font-extrabold underline hover:text-rose-900">
+                  لیجر تفصیلات دیکھیں
+                </button>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
+                <input type="number" id="advancePaid" value="10000" oninput="onAdvanceInputChanged()"
+                  class="w-full px-3 py-2 bg-white border border-rose-300 rounded-xl focus:ring-2 focus:ring-rose-500 font-black text-rose-800 font-mono text-xs sm:text-sm">
+
+                <div class="bg-white/90 p-2 rounded-xl border border-rose-200 text-center">
+                  <span class="text-[10px] text-slate-500 font-bold block">موجودہ کٹوتی کے بعد بقیہ ایڈوانس</span>
+                  <span class="text-sm font-black text-rose-900 font-mono" id="ledgerBadgeBalance">Rs. 20,000</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ================= کالم 2: لائیو رسید (انگلش LTR فارمیٹ میں) ================= -->
+      <div class="lg:col-span-5 space-y-4 lg:sticky lg:top-20">
+
+        <!-- رسید کارڈ: مکمل انگلش LTR فارمیٹ -->
+        <div id="printable-slip" class="en-slip bg-white rounded-2xl sm:rounded-3xl shadow-xl border-2 border-slate-300 overflow-hidden max-w-md mx-auto lg:max-w-none w-full">
+          
+          <!-- ہیڈر -->
+          <div class="bg-slate-900 text-white p-4 text-center">
+            <h3 class="font-black text-lg tracking-wider uppercase font-mono">
+              BILLING MONTH: <span id="slipBillingMonthTextUpper" class="text-yellow-300">OCTOBER-2026</span>
+            </h3>
+            <p class="text-[11px] text-emerald-300 font-bold mt-0.5 tracking-wide uppercase">
+              Monthly Rental & Sub-Meter Invoice
+            </p>
+          </div>
+
+          <!-- اگر اکتوبر 2026 سے پچھلا مہینہ ہو -->
+          <div id="noRecordSlipNotice" class="hidden p-8 text-center space-y-3 bg-slate-50">
+            <div class="w-16 h-16 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center text-2xl mx-auto">
+              <i class="fa-solid fa-calendar-xmark"></i>
+            </div>
+            <h4 class="font-black text-slate-900 text-base">Record Not Available</h4>
+            <p class="text-xs text-slate-500 font-medium">
+              Digital billing records in this system start from <strong>October 2026</strong>. No previous invoice is available.
+            </p>
+          </div>
+
+          <!-- اصل رسید کا مواد (انگلش LTR) -->
+          <div id="actualSlipContent" class="p-4 sm:p-5 space-y-3 text-xs text-slate-800">
+
+            <!-- کرائے دار معلومات -->
+            <div class="flex justify-between items-center pb-2.5 border-b border-dashed border-slate-300">
+              <div>
+                <span class="text-[10px] text-slate-400 block uppercase font-bold tracking-wider">Tenant Name:</span>
+                <span class="font-black text-slate-900 text-sm" id="slipTenantName">Ehsanullah (احسان اللہ)</span>
+              </div>
+              <div class="text-right">
+                <span class="text-[10px] text-slate-400 block uppercase font-bold tracking-wider">Sub-Meter No:</span>
+                <span class="font-black text-slate-900 text-xs font-mono" id="slipMeterNo">0027710</span>
+              </div>
+            </div>
+
+            <!-- واپڈا 2 میٹرز کا شفاف حساب (WAPDA Dual Meters Calculation) -->
+            <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2">
+              <div class="flex justify-between items-center text-[11px] font-bold border-b border-slate-200/80 pb-1.5">
+                <span class="text-slate-600 uppercase">Total Electric Bill</span>
+                <span class="font-mono text-slate-900 font-black">Rs. <span id="slipWapdaBill">6,540</span></span>
+              </div>
+              <div class="flex justify-between items-center text-[11px] font-bold border-b border-slate-200/80 pb-1.5">
+                <span class="text-slate-600 uppercase">Total WAPDA Units</span>
+                <span class="font-mono text-slate-900 font-black"><span id="slipWapdaUnits">279</span> Units</span>
+              </div>
+              <div class="flex justify-between items-center text-[11px] font-bold text-amber-900 bg-amber-50/80 p-1.5 rounded-lg border border-amber-200/80">
+                <span class="uppercase">Per Unit Rate (Bill ÷ Units):</span>
+                <span class="font-mono text-amber-700 font-black text-xs">Rs. <span id="slipRate">23.44</span> / Unit</span>
+              </div>
+              <div class="text-[10px] text-slate-500 pt-0.5 flex justify-between font-mono">
+                <span>M1 Ref: <strong class="text-slate-700" id="slipM1Ref">18143170401500</strong></span>
+                <span>M2 Ref: <strong class="text-slate-700" id="slipM2Ref">18143170401550</strong></span>
+              </div>
+            </div>
+
+            <!-- سب میٹر بجلی کا درست حساب (Mathematical exact breakdown: 29 Units × Rs. 23.44 = Rs. 680) -->
+            <div class="bg-amber-50/80 p-3 rounded-xl border border-amber-300 space-y-1.5">
+              <div class="flex justify-between items-center font-black text-amber-950 text-xs">
+                <span class="uppercase tracking-wide">⚡ Electric Bill (Sub-Meter)</span>
+                <span class="text-sm font-mono text-amber-800">Rs. <span id="slipElecTotal">680</span></span>
+              </div>
+              <div class="text-[11px] text-slate-600 flex justify-between items-center font-mono border-t border-amber-200/80 pt-1">
+                <span>Reading: <span id="slipPrev">2121</span> to <span id="slipCurr">2150</span></span>
+                <span class="font-bold text-slate-800">Diff: <span id="slipUnits">29</span> Units</span>
+              </div>
+              <div class="text-[11px] text-amber-900 font-mono font-bold bg-white/90 p-1.5 rounded border border-amber-200">
+                Calculation: <span id="slipUnitsSmall">29</span> Units × Rs. <span id="slipRateSmall">23.44</span> = Rs. <span id="slipElecTotalSmall">680</span>
+              </div>
+            </div>
+
+            <!-- ماہانہ یوٹیلیٹیز کی فہرست -->
+            <div class="space-y-1.5 pt-1 border-t border-slate-200">
+              <div class="flex justify-between items-center py-0.5">
+                <span class="text-slate-600 font-bold">💧 Water Bill (WASA 1/3 Share):</span>
+                <span class="font-mono font-black text-slate-900">Rs. <span id="slipWater">347</span></span>
+              </div>
+
+              <div class="flex justify-between items-center py-0.5">
+                <span class="text-slate-600 font-bold">⚙️ Electric / Motor Bill:</span>
+                <span class="font-mono font-black text-slate-900">Rs. <span id="slipMotor">300</span></span>
+              </div>
+
+              <div class="flex justify-between items-center py-0.5">
+                <span class="text-slate-600 font-bold">🏠 House Rent:</span>
+                <span class="font-mono font-black text-slate-900">Rs. <span id="slipBaseRent">9,000</span></span>
+              </div>
+
+              <div class="flex justify-between items-center py-0.5">
+                <span class="text-slate-600 font-bold">🌐 Internet Bill:</span>
+                <span class="font-mono font-black text-slate-900">Rs. <span id="slipInternet">1,500</span></span>
+              </div>
+
+              <div class="flex justify-between items-center py-0.5">
+                <span class="text-slate-600 font-bold">🔥 Sui Gas Bill (1/3 Share):</span>
+                <span class="font-mono font-black text-slate-900">Rs. <span id="slipGas">410</span></span>
+              </div>
+            </div>
+
+            <!-- کٹوتیاں اور کل میزان -->
+            <div class="pt-2.5 border-t-2 border-slate-900 space-y-2">
+              
+              <!-- متفرق کٹوتی -->
+              <div id="slipDeductionRow" class="flex justify-between items-center bg-rose-50 p-2 rounded-xl border border-rose-200 text-rose-900 font-bold">
+                <div>
+                  <span class="block">Less Deduction (<span id="slipDeductName">گندم پسوائی</span>):</span>
+                </div>
+                <span class="font-mono font-black text-rose-700">- Rs. <span id="slipDeductAmount">400</span></span>
+              </div>
+
+              <!-- TOTAL AMOUNT (بڑا، بولڈ اور واضح) -->
+              <div class="p-3 bg-amber-50 rounded-xl border-2 border-amber-300 flex justify-between items-center shadow-xs">
+                <div>
+                  <span class="text-xs font-black text-amber-950 block uppercase tracking-wide">TOTAL AMOUNT:</span>
+                  <span class="text-[10px] text-slate-500 font-medium">(Utilities minus deduction)</span>
+                </div>
+                <div class="text-xl sm:text-2xl font-black text-slate-900 font-mono tracking-tight">
+                  Rs. <span id="slipSubtotal">11,837</span>
+                </div>
+              </div>
+
+              <!-- ADVANCE IF PAID -->
+              <div id="advanceSlipRow" class="flex justify-between items-center bg-slate-50 p-2 rounded-xl border border-slate-200 font-bold text-rose-700">
+                <span class="uppercase">Advance If Paid:</span>
+                <span class="font-mono font-black">- Rs. <span id="slipAdvance">10,000</span></span>
+              </div>
+
+              <!-- TOTAL PAYABLE BILL -->
+              <div class="flex justify-between items-center pt-2.5 border-t-2 border-dashed border-slate-300">
+                <div>
+                  <span class="text-xs text-slate-600 uppercase block font-black">TOTAL PAYABLE BILL:</span>
+                  <span class="text-[10px] text-emerald-700 font-bold uppercase">Net Payable Amount</span>
+                </div>
+                <div class="text-2xl sm:text-3xl font-black text-emerald-700 font-mono tracking-tight">
+                  Rs. <span id="slipGrandTotal">1,827</span>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
+          <!-- فوٹر -->
+          <div class="bg-slate-100 px-4 py-2.5 text-center text-[10px] text-slate-500 font-bold border-t border-slate-200 uppercase tracking-wider">
+            Computerized Invoice • Verified Calculation • Thank You
+          </div>
+
+        </div>
+
+        <!-- ایکشن بٹنز -->
+        <div id="actionButtonsContainer" class="space-y-2 pt-1 max-w-md mx-auto lg:max-w-none w-full">
+          
+          <!-- سیو / لاک بٹن (صرف ایڈمن کے لیے) -->
+          <button id="btnSaveLock" onclick="saveAndLockCurrentBill()" class="admin-only owner-only w-full py-3 px-4 bg-slate-900 hover:bg-slate-800 text-white font-black rounded-xl shadow-md flex items-center justify-center gap-2 transition active:scale-[0.98]">
+            <i class="fa-solid fa-lock text-amber-400"></i> یہ بل محفوظ و لاک کریں (صرف ایڈمن)
+          </button>
+
+          <!-- واٹس ایپ ایکشن بٹن -->
+          <button id="btnWhatsAppAction" onclick="handleWhatsAppAction()" class="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-xl shadow-sm flex items-center justify-center gap-2 transition active:scale-[0.98]">
+            <i class="fa-brands fa-whatsapp text-xl"></i> <span id="whatsAppBtnText">واٹس ایپ پر بل شیئر کریں</span>
+          </button>
+          
+          <!-- پرنٹ رسید -->
+          <button id="btnPrintSlip" onclick="window.print()" class="w-full py-2.5 px-4 bg-white hover:bg-slate-50 text-slate-800 font-bold rounded-xl border border-slate-300 shadow-xs flex items-center justify-center gap-2 transition">
+            <i class="fa-solid fa-print"></i> رسید پرنٹ / PDF ڈاؤن لوڈ کریں
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ================= محفوظ شدہ بلز آرکائیو (فل وڈتھ ٹیبل) ================= -->
+    <div id="savedBillsSection" class="mt-10 sm:mt-14 bg-white rounded-3xl p-4 sm:p-6 shadow-sm border border-slate-200">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-4 border-b border-slate-200 pb-3">
+        <div>
+          <h3 class="font-extrabold text-slate-900 text-base sm:text-lg flex items-center gap-2">
+            <i class="fa-solid fa-box-archive text-emerald-700 text-lg"></i> محفوظ شدہ ماہانہ بلز ریکارڈ (Saved Bills History)
+          </h3>
+          <p class="text-xs text-slate-500 font-medium">سابقہ محفوظ شدہ بلز کی مکمل ہسٹری و ڈیجیٹل ریکارڈ</p>
+        </div>
+        <span class="text-xs bg-emerald-50 text-emerald-800 px-3 py-1 rounded-full font-bold border border-emerald-200" id="savedBillsCountBadge">0 بلز محفوظ ہیں</span>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-right text-xs">
+          <thead>
+            <tr class="bg-slate-100 text-slate-700 border-b border-slate-300 font-bold">
+              <th class="py-3 px-3">بلنگ مہینہ</th>
+              <th class="py-3 px-3">کرائے دار</th>
+              <th class="py-3 px-3 text-center">سب میٹر ریڈنگ</th>
+              <th class="py-3 px-3 text-center">یونٹس / ریٹ</th>
+              <th class="py-3 px-3">کل بل (Total)</th>
+              <th class="py-3 px-3">ایڈوانس کٹوتی</th>
+              <th class="py-3 px-3">خالص بل (Payable)</th>
+              <th class="py-3 px-3 text-center admin-only owner-only">ایکشن (ایڈمن)</th>
+            </tr>
+          </thead>
+          <tbody id="savedBillsTableBody" class="divide-y divide-slate-100 text-slate-800 font-medium">
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ================= موڈل 1: پاسورڈ لاگ ان موڈل ================= -->
+  <div id="loginModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+      <div class="text-center space-y-1">
+        <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center text-xl mx-auto shadow-inner">
+          <i class="fa-solid fa-shield-halved"></i>
+        </div>
+        <h3 class="font-extrabold text-base text-slate-900" id="modalRoleTitle">ایڈمن اکاؤنٹ لاگ ان</h3>
+        <p class="text-xs text-slate-500 font-medium" id="modalRoleSubtitle">سیکیورٹی پن / پاسورڈ درج کریں</p>
+      </div>
+
+      <div>
+        <input type="password" id="loginPasswordInput" placeholder="پاسورڈ درج کریں..."
+          class="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 text-center font-mono text-base font-bold tracking-widest text-slate-900">
+        <p id="loginErrorMsg" class="hidden text-rose-600 text-[11px] font-bold text-center mt-1.5">
+          غلط پاسورڈ! دوبارہ کوشش کریں۔
+        </p>
+      </div>
+
+      <div class="flex gap-2">
+        <button type="button" onclick="closeLoginModal()" class="flex-1 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition">
+          منسوخ
+        </button>
+        <button type="button" onclick="submitLogin()" class="flex-1 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs transition shadow-sm">
+          تصدیق و لاگ ان
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= موڈل 2: سب میٹر ریڈنگ ریکارڈ چارٹ ================= -->
+  <div id="historyModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 z-50">
+    <div class="bg-white rounded-3xl max-w-2xl w-full p-5 sm:p-6 shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto">
+      
+      <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+        <div>
+          <h3 class="font-extrabold text-slate-900 text-base flex items-center gap-2">
+            <i class="fa-solid fa-list-check text-indigo-700"></i> سب میٹر ریڈنگ ریکارڈ ( احسان اللہ - میٹر # 0027710)
+          </h3>
+          <p class="text-xs text-slate-500 font-medium">سابقہ و موجودہ ریڈنگز کا مکمل جدول</p>
+        </div>
+        <button onclick="closeHistoryModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:text-slate-800 flex items-center justify-center">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- نئی ریڈنگ اندراج (صرف ایڈمن کے لیے) -->
+      <div class="admin-only owner-only bg-slate-50 p-3 rounded-2xl border border-slate-200 space-y-2">
+        <span class="text-xs font-black text-slate-800 block">نئی ریڈنگ شامل کریں (صرف ایڈمن):</span>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+          <div>
+            <label class="block text-[10px] font-bold text-slate-500">مہینہ و سال</label>
+            <input type="text" id="newHistMonth" placeholder="مثلاً: Nov-26" class="w-full px-2 py-1 bg-white border border-slate-300 rounded-lg font-bold">
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold text-slate-500">سابقہ ریڈنگ</label>
+            <input type="number" id="newHistPrev" class="w-full px-2 py-1 bg-white border border-slate-300 rounded-lg font-bold font-mono">
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold text-slate-500">موجودہ ریڈنگ</label>
+            <input type="number" id="newHistCurr" class="w-full px-2 py-1 bg-white border border-slate-300 rounded-lg font-bold font-mono">
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold text-slate-500">تاریخ</label>
+            <input type="text" id="newHistDate" placeholder="15/12/2026" class="w-full px-2 py-1 bg-white border border-slate-300 rounded-lg font-bold font-mono">
+          </div>
+        </div>
+        <button type="button" onclick="addNewHistoryEntry()" class="w-full py-1.5 bg-indigo-700 hover:bg-indigo-800 text-white font-bold rounded-xl text-xs transition">
+          + ریڈنگ محفوظ کریں
+        </button>
+      </div>
+
+      <!-- ٹیبل -->
+      <div class="overflow-x-auto border border-slate-200 rounded-2xl">
+        <table class="w-full text-right text-xs">
+          <thead>
+            <tr class="bg-indigo-50 text-indigo-950 font-black border-b border-indigo-200">
+              <th class="py-2.5 px-3">مہینہ / سال</th>
+              <th class="py-2.5 px-3 text-center">سابقہ ریڈنگ</th>
+              <th class="py-2.5 px-3 text-center">موجودہ ریڈنگ</th>
+              <th class="py-2.5 px-3 text-center">کل یونٹس</th>
+              <th class="py-2.5 px-3 text-center">ریڈنگ تاریخ</th>
+            </tr>
+          </thead>
+          <tbody id="historyTableBody" class="divide-y divide-slate-100 text-slate-800">
+          </tbody>
+        </table>
+      </div>
+
+      <div class="text-right">
+        <button onclick="closeHistoryModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold rounded-xl text-xs">
+          بند کریں
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ================= موڈل 3: ایڈوانس ٹریکنگ لیجر موڈل ================= -->
+  <div id="ledgerModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 z-50">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-5 sm:p-6 shadow-2xl border border-slate-200 space-y-4">
+      
+      <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+        <div>
+          <h3 class="font-extrabold text-slate-900 text-base flex items-center gap-2">
+            <i class="fa-solid fa-book-bookmark text-rose-600"></i> ایڈوانس ٹریکنگ لیجر (احسان اللہ)
+          </h3>
+          <p class="text-xs text-slate-500 font-medium">سابقہ وصولی اور ماہانہ کٹوتیوں کی تفصیلی صورتحال</p>
+        </div>
+        <button onclick="closeLedgerModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:text-slate-800 flex items-center justify-center">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- ٹیبز -->
+      <div class="flex border-b border-slate-200 text-xs">
+        <button type="button" id="tabActiveLedgerBtn" onclick="switchLedgerTab('active')" class="flex-1 py-2.5 border-b-2 border-rose-600 text-rose-700 bg-white font-black">
+          موجودہ فعال ایڈوانس (Sep-26 Pool)
+        </button>
+        <button type="button" id="tabArchivedLedgerBtn" onclick="switchLedgerTab('archived')" class="flex-1 py-2.5 text-slate-500 hover:text-slate-800 font-bold">
+          سابقہ مکمل ایڈوانس ریکارڈ
+        </button>
+      </div>
+
+      <!-- ٹیب 1: ایکٹو لیجر -->
+      <div id="ledgerTabActive" class="space-y-3">
+        <div class="bg-rose-50 p-4 rounded-2xl border border-rose-200 space-y-2 text-xs">
+          <div class="flex justify-between items-center font-bold">
+            <span class="text-slate-700">کل ایڈوانس موصولہ (ستمبر 2026):</span>
+            <span class="font-mono text-slate-900 text-sm font-black">Rs. 50,000</span>
+          </div>
+          <div class="flex justify-between items-center text-slate-600 border-t border-rose-200/80 pt-1.5">
+            <span>اگست 2026 کٹوتی (August Adjustment):</span>
+            <span class="font-mono text-rose-700 font-bold">- Rs. 10,000</span>
+          </div>
+          <div class="flex justify-between items-center text-slate-600">
+            <span>ستمبر 2026 کٹوتی (September Adjustment):</span>
+            <span class="font-mono text-rose-700 font-bold">- Rs. 10,000</span>
+          </div>
+          <div class="flex justify-between items-center text-slate-800 font-bold bg-white p-2 rounded-lg border border-rose-200">
+            <span>اکتوبر 2026 کٹوتی (اس مہینے کی ایڈجسٹمنٹ):</span>
+            <span class="font-mono text-rose-800 font-black">- Rs. <span id="modalCurrentAdjustment">10,000</span></span>
+          </div>
+          <div class="flex justify-between items-center text-rose-950 font-black text-sm border-t-2 border-rose-300 pt-2">
+            <span>بقیہ ایڈوانس رقم (Remaining Balance):</span>
+            <span class="font-mono text-base text-rose-700">Rs. <span id="modalRemainingBalance">20,000</span></span>
+          </div>
+        </div>
+
+        <div id="settleLedgerBtnContainer" class="hidden pt-1">
+          <button type="button" onclick="archiveCurrentLedger()" class="admin-only owner-only w-full py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl text-xs shadow-sm transition">
+            یہ 50,000 ایڈوانس سائیکل مکمل / کلیر کریں (Archive Cycle)
+          </button>
+        </div>
+      </div>
+
+      <!-- ٹیب 2: آرکائیو شدہ لیجر (خالی اسٹیٹ جب تک کوئی مکمل ریکارڈ نہ آئے) -->
+      <div id="ledgerTabArchived" class="hidden space-y-3">
+        <div id="archivedLedgersList" class="space-y-2"></div>
+      </div>
+
+      <div class="text-right pt-2 border-t border-slate-200">
+        <button onclick="closeLedgerModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold rounded-xl text-xs">
+          بند کریں
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ================= موڈل 4: امیج ویور موڈل ================= -->
+  <div id="imageViewerModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 z-50">
+    <div class="bg-white rounded-3xl max-w-xl w-full p-4 shadow-2xl border border-slate-200 space-y-3">
+      <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+        <h3 class="font-black text-slate-900 text-sm" id="imageViewTitle">محفوظ شدہ تصویر</h3>
+        <button onclick="closeImageViewer()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 hover:text-slate-900 flex items-center justify-center font-bold">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div class="bg-slate-900 rounded-2xl overflow-hidden flex items-center justify-center min-h-[300px] max-h-[70vh]">
+        <img id="imageViewerSrc" src="" alt="Bill Attachment" class="max-w-full max-h-[68vh] object-contain">
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= موڈل 5: کلاؤڈ سنک و بیک اپ مینیجر موڈل ================= -->
+  <div id="cloudModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 z-50">
+    <div class="bg-white rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-slate-200 space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+        <div>
+          <h3 class="font-black text-slate-900 text-base flex items-center gap-2">
+            <i class="fa-solid fa-cloud-arrow-up text-sky-600"></i> کلاؤڈ ڈیٹا و بیک اپ مینیجر
+          </h3>
+          <p class="text-xs text-slate-500 font-medium">آن لائن ہوسٹنگ، گٹ ہب اور لوکل ڈیٹا بیک اپ</p>
+        </div>
+        <button onclick="closeCloudModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:text-slate-800 flex items-center justify-center">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div class="p-3 bg-emerald-50 rounded-2xl border border-emerald-200 text-emerald-950 font-bold space-y-1">
+          <div class="flex items-center gap-1.5 text-emerald-800">
+            <i class="fa-solid fa-circle-check"></i> <span>گٹ ہب ریپوزٹری و لائیو ہوسٹنگ لنک:</span>
+          </div>
+          <a href="https://github.com/waqasrasool11-8061/rental-submeter-billing" target="_blank" class="block font-mono text-[11px] text-sky-700 underline truncate">
+            https://github.com/waqasrasool11-8061/rental-submeter-billing
+          </a>
+        </div>
+
+        <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
+          <span class="font-black text-slate-800 block">ڈیٹا بیک اپ و ڈاؤن لوڈ (JSON Export):</span>
+          <p class="text-[11px] text-slate-500">اپنا تمام ریکارڈ (محفوظ بلز، ریڈنگز، سیٹنگز) ایک کلک میں اپنے موبائل یا کمپیوٹر پر محفوظ کریں:</p>
+          <button type="button" onclick="exportDataBackup()" class="w-full py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition">
+            <i class="fa-solid fa-download"></i> مکمل ڈیٹا بیک اپ فائل ڈاؤن لوڈ کریں
+          </button>
+        </div>
+
+        <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
+          <span class="font-black text-slate-800 block">بیک اپ فائل ریسٹور (JSON Import):</span>
+          <input type="file" id="importBackupInput" accept=".json" onchange="importDataBackup(event)" class="text-xs block w-full text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-sky-100 file:text-sky-900 hover:file:bg-sky-200 cursor-pointer">
+        </div>
+      </div>
+
+      <div class="text-right pt-2 border-t border-slate-200">
+        <button onclick="closeCloudModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold rounded-xl text-xs">
+          بند کریں
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= جاوا اسکرپٹ لاجک ================= -->
+  <script>
+    // 1. کردار اور پاسورڈ سسٹم (Admin Password: 23221 | Tenant: 0027710)
+    let currentRole = localStorage.getItem('active_user_role') || 'admin';
+    let pendingLoginRole = null;
+
+    const ADMIN_PASSWORD = "23221";
+    const TENANT_PASSWORD = "0027710";
+
+    function promptLogin(targetRole) {
+      // Map legacy 'owner' to 'admin'
+      if (targetRole === 'owner') targetRole = 'admin';
+
+      if (targetRole === currentRole) return;
+      pendingLoginRole = targetRole;
+
+      const title = document.getElementById('modalRoleTitle');
+      const subtitle = document.getElementById('modalRoleSubtitle');
+      const passInput = document.getElementById('loginPasswordInput');
+      const err = document.getElementById('loginErrorMsg');
+
+      passInput.value = '';
+      err.classList.add('hidden');
+
+      if (targetRole === 'admin') {
+        title.innerText = "ایڈمن اکاؤنٹ لاگ ان (Admin Login)";
+        subtitle.innerText = "ایڈمن کا پاسورڈ (23221) درج کریں";
+      } else {
+        title.innerText = "کرائے دار اکاؤنٹ لاگ ان (احسان اللہ)";
+        subtitle.innerText = "کرائے دار کا پاسورڈ (0027710) درج کریں";
+      }
+
+      document.getElementById('loginModal').classList.remove('hidden');
+      setTimeout(() => passInput.focus(), 100);
+    }
+
+    function closeLoginModal() {
+      document.getElementById('loginModal').classList.add('hidden');
+      pendingLoginRole = null;
+    }
+
+    function submitLogin() {
+      const entered = document.getElementById('loginPasswordInput').value.trim();
+      const err = document.getElementById('loginErrorMsg');
+
+      if (pendingLoginRole === 'admin') {
+        if (entered === ADMIN_PASSWORD) {
+          applyRole('admin');
+          closeLoginModal();
+        } else {
+          err.classList.remove('hidden');
+        }
+      } else {
+        if (entered === TENANT_PASSWORD) {
+          applyRole('tenant');
+          closeLoginModal();
+        } else {
+          err.classList.remove('hidden');
+        }
+      }
+    }
+
+    document.getElementById('loginPasswordInput').addEventListener('keyup', function(e) {
+      if (e.key === 'Enter') submitLogin();
+    });
+
+    function applyRole(role) {
+      if (role === 'owner') role = 'admin';
+      currentRole = role;
+      localStorage.setItem('active_user_role', role);
+
+      const adminBtn = document.getElementById('roleBtnAdmin');
+      const tenantBtn = document.getElementById('roleBtnTenant');
+      const banner = document.getElementById('roleIndicatorBanner');
+      const whatsAppBtnText = document.getElementById('whatsAppBtnText');
+
+      if (role === 'admin') {
+        document.body.classList.remove('tenant-mode');
+        adminBtn.className = "px-3 py-1.5 rounded-lg font-extrabold transition bg-amber-400 text-slate-900 shadow-sm flex items-center gap-1.5";
+        tenantBtn.className = "px-3 py-1.5 rounded-lg font-extrabold transition text-emerald-200 hover:text-white flex items-center gap-1.5";
+        banner.className = "bg-amber-100 border-b border-amber-300 text-amber-950 py-1.5 px-4 text-xs font-bold text-center flex items-center justify-center gap-2 shadow-xs";
+        banner.innerHTML = `<i class="fa-solid fa-crown text-amber-600"></i> <span>آپ <strong>ایڈمن اکاؤنٹ (Admin Mode)</strong> میں ہیں۔ تمام فیلڈز اور اختیارات فعال ہیں۔</span>`;
+        whatsAppBtnText.innerText = "واٹس ایپ پر بل شیئر کریں";
+      } else {
+        document.body.classList.add('tenant-mode');
+        tenantBtn.className = "px-3 py-1.5 rounded-lg font-extrabold transition bg-emerald-400 text-slate-900 shadow-sm flex items-center gap-1.5";
+        adminBtn.className = "px-3 py-1.5 rounded-lg font-extrabold transition text-emerald-200 hover:text-white flex items-center gap-1.5";
+        banner.className = "bg-blue-100 border-b border-blue-300 text-blue-950 py-1.5 px-4 text-xs font-bold text-center flex items-center justify-center gap-2 shadow-xs";
+        banner.innerHTML = `<i class="fa-solid fa-user-shield text-blue-600"></i> <span>آپ <strong>کرائے دار اکاؤنٹ (احسان اللہ)</strong> میں ہیں۔ صرف رسید دیکھنے اور ایڈمن سے رابطے کی اجازت ہے۔</span>`;
+        whatsAppBtnText.innerText = "ایڈمن سے واٹس ایپ پر رابطہ کریں";
+      }
+
+      renderSavedBillsTable();
+    }
+
+    // 2. واٹس ایپ ایکشن
+    function handleWhatsAppAction() {
+      if (isMonthBeforeOctober2026()) {
+        alert("October 2026 سے پچھلے مہینوں کی رسید دستیاب نہیں ہے۔");
+        return;
+      }
+
+      const monthSel = document.getElementById('billingMonthSelect').value;
+      const yearSel = document.getElementById('billingYearSelect').value;
+      const monthStr = `${monthSel} ${yearSel}`;
+
+      if (currentRole === 'tenant') {
+        const grandTotal = document.getElementById('slipGrandTotal').innerText;
+        const tenantMsg = `السلام علیکم وقاص صاحب!%0A` +
+          `میں احسان اللہ بات کر رہا ہوں۔ میں نے ماہ *${monthStr}* کا رینٹل و سب میٹر بل (کل واجب الادا رقم: Rs. ${grandTotal}) پورٹل پر چیک کر لیا ہے۔ شکریہ!`;
+        window.open(`https://api.whatsapp.com/send?phone=923465118061&text=${tenantMsg}`, '_blank');
+      } else {
+        shareWhatsAppBill();
+      }
+    }
+
+    function shareWhatsAppBill() {
+      const monthSel = document.getElementById('billingMonthSelect').value;
+      const yearSel = document.getElementById('billingYearSelect').value;
+      const monthStr = `${monthSel} ${yearSel}`;
+
+      const name = document.getElementById('slipTenantName').innerText;
+      const meterNo = document.getElementById('slipMeterNo').innerText;
+      const m1Ref = document.getElementById('slipM1Ref').innerText;
+      const m2Ref = document.getElementById('slipM2Ref').innerText;
+      const rent = document.getElementById('slipBaseRent').innerText;
+      const net = document.getElementById('slipInternet').innerText;
+      const prev = document.getElementById('slipPrev').innerText;
+      const curr = document.getElementById('slipCurr').innerText;
+      const units = document.getElementById('slipUnits').innerText;
+      const rate = document.getElementById('slipRate').innerText;
+      const elecTotal = document.getElementById('slipElecTotal').innerText;
+      const wapdaBill = document.getElementById('slipWapdaBill').innerText;
+      const wapdaUnits = document.getElementById('slipWapdaUnits').innerText;
+      const water = document.getElementById('slipWater').innerText;
+      const gas = document.getElementById('slipGas').innerText;
+      const motor = document.getElementById('slipMotor').innerText;
+      const deductName = document.getElementById('deductionName').value.trim() || 'Deduction';
+      const deductAmount = parseFloat(document.getElementById('deductionAmount').value) || 0;
+      const subtotal = document.getElementById('slipSubtotal').innerText;
+      const advanceVal = parseFloat(document.getElementById('advancePaid').value) || 0;
+      const grandTotal = document.getElementById('slipGrandTotal').innerText;
+      const remainingAdv = document.getElementById('modalRemainingBalance').innerText;
+
+      let msg = `*BILLING MONTH: ${monthStr.toUpperCase()}*%0A` +
+        `Tenant: *${name}* (Sub-Meter: ${meterNo})%0A` +
+        `-----------------------------------------%0A` +
+        `🏠 *HOUSE RENT:* Rs. ${rent}%0A` +
+        `🌐 *INTERNET BILL:* Rs. ${net}%0A` +
+        `-----------------------------------------%0A` +
+        `⚡ *ELECTRIC BILL (SUB-METER):*%0A` +
+        `• Reading: ${prev} to ${curr}%0A` +
+        `• ${units} Units × Rs. ${rate} / Unit%0A` +
+        `  _(WAPDA Bill: Rs. ${wapdaBill} ÷ ${wapdaUnits} Units = Rs. ${rate}/Unit)_%0A` +
+        `  _(WAPDA Ref: ${m1Ref} / ${m2Ref})_%0A` +
+        `⚡ *Electric Total:* Rs. ${elecTotal}%0A` +
+        `-----------------------------------------%0A` +
+        `💧 *WATER BILL (WASA 1/3):* Rs. ${water}%0A` +
+        `🔥 *SUI GAS BILL (1/3):* Rs. ${gas}%0A` +
+        `⚙️ *ELECTRIC / MOTOR BILL:* Rs. ${motor}%0A`;
+
+      if (deductAmount > 0) {
+        msg += `🔖 *Less Deduction (${deductName}):* - Rs. ${deductAmount.toLocaleString()}%0A`;
+      }
+
+      msg += `-----------------------------------------%0A` +
+        `*📋 TOTAL AMOUNT: Rs. ${subtotal}*%0A`;
+
+      if (advanceVal > 0) {
+        msg += `💵 *ADVANCE IF PAID:* - Rs. ${advanceVal.toLocaleString()}%0A` +
+               `📌 _(Remaining Advance: Rs. ${remainingAdv})_%0A`;
+      }
+
+      msg += `-----------------------------------------%0A` +
+        `*💰 TOTAL PAYABLE BILL: Rs. ${grandTotal}*%0A` +
+        `-----------------------------------------%0A` +
+        `Thank you!`;
+
+      window.open(`https://api.whatsapp.com/send?text=${msg}`, '_blank');
+    }
+
+    // 3. ریفرنس نمبرز اور سب میٹر نمبر
+    const defaultM1Ref = "18143170401500";
+    const defaultM2Ref = "18143170401550";
+    const defaultSubmeterNo = "0027710";
+
+    function loadSavedReferenceNumbers() {
+      const m1Ref = localStorage.getItem('wapda_m1_ref') || defaultM1Ref;
+      const m2Ref = localStorage.getItem('wapda_m2_ref') || defaultM2Ref;
+      const sNo = localStorage.getItem('tenant_submeter_no') || defaultSubmeterNo;
+
+      document.getElementById('m1MeterNumber').value = m1Ref;
+      document.getElementById('m2MeterNumber').value = m2Ref;
+      document.getElementById('tenantMeterNo').value = sNo;
+    }
+
+    function onRefNumberChanged() {
+      const m1Ref = document.getElementById('m1MeterNumber').value.trim();
+      const m2Ref = document.getElementById('m2MeterNumber').value.trim();
+      const sNo = document.getElementById('tenantMeterNo').value.trim();
+
+      localStorage.setItem('wapda_m1_ref', m1Ref);
+      localStorage.setItem('wapda_m2_ref', m2Ref);
+      localStorage.setItem('tenant_submeter_no', sNo);
+
+      calculateAll();
+    }
+
+    // 4. کیمرہ اور فوٹو اپلوڈ ہینڈلر
+    const capturedPhotos = {
+      m1BillPhoto: null,
+      m2BillPhoto: null,
+      wasaBillPhoto: null,
+      gasBillPhoto: null,
+      submeterPhoto: null
+    };
+
+    function triggerCamera(inputId) {
+      document.getElementById(inputId).click();
+    }
+
+    function handlePhotoCapture(inputId, labelId, previewId) {
+      const fileInput = document.getElementById(inputId);
+      if (fileInput.files && fileInput.files[0]) {
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          capturedPhotos[inputId] = e.target.result;
+          document.getElementById(labelId).innerText = "تصویر محفوظ ہے ✓";
+          document.getElementById(previewId).classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function viewPhoto(inputId) {
+      if (capturedPhotos[inputId]) {
+        document.getElementById('imageViewerSrc').src = capturedPhotos[inputId];
+        document.getElementById('imageViewTitle').innerText = "محفوظ شدہ تصویر";
+        document.getElementById('imageViewerModal').classList.remove('hidden');
+      } else {
+        alert("اس سیکشن میں ابھی تصویر منسلک نہیں کی گئی ہے۔");
+      }
+    }
+
+    function closeImageViewer() {
+      document.getElementById('imageViewerModal').classList.add('hidden');
+    }
+
+    // 5. سب میٹر ریکارڈ (Shifted Jul-26 to Oct-26)
+    const initialMeterHistoryShifted = [
+      { month: "Jul-26", prev: 1955, curr: 2006, units: 51, date: "13/08/2026" },
+      { month: "Aug-26", prev: 2006, curr: 2064, units: 58, date: "13/09/2026" },
+      { month: "Sep-26", prev: 2064, curr: 2121, units: 57, date: "13/10/2026" },
+      { month: "Oct-26", prev: 2121, curr: 2150, units: 29, date: "15/11/2026" }
+    ];
+
+    let meterHistory = JSON.parse(localStorage.getItem('submeter_reading_history_v4')) || initialMeterHistoryShifted;
+
+    function renderHistoryTable() {
+      const tbody = document.getElementById('historyTableBody');
+      tbody.innerHTML = '';
+
+      [...meterHistory].reverse().forEach((row) => {
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50 transition border-b border-slate-100";
+        tr.innerHTML = `
+          <td class="py-2.5 px-3 font-extrabold text-slate-900">${row.month}</td>
+          <td class="py-2.5 px-3 text-center text-slate-700 font-bold">${row.prev}</td>
+          <td class="py-2.5 px-3 text-center text-slate-900 font-extrabold">${row.curr}</td>
+          <td class="py-2.5 px-3 text-center font-black bg-emerald-50 text-emerald-800">${row.units}</td>
+          <td class="py-2.5 px-3 text-center text-slate-600 font-bold text-[11px] font-mono">${row.date}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      if (meterHistory.length > 0) {
+        const lastEntry = meterHistory[meterHistory.length - 1];
+        document.getElementById('newHistPrev').value = lastEntry.curr;
+      }
+    }
+
+    function addNewHistoryEntry() {
+      const month = document.getElementById('newHistMonth').value.trim();
+      const prev = parseFloat(document.getElementById('newHistPrev').value) || 0;
+      const curr = parseFloat(document.getElementById('newHistCurr').value) || 0;
+      const date = document.getElementById('newHistDate').value.trim() || new Date().toLocaleDateString('en-GB');
+
+      if (!month || !curr) {
+        alert("براہ کرم مہینہ اور موجودہ ریڈنگ درج کریں!");
+        return;
+      }
+
+      const units = Math.max(0, curr - prev);
+      const existIdx = meterHistory.findIndex(m => m.month.toLowerCase() === month.toLowerCase());
+      if (existIdx >= 0) {
+        meterHistory[existIdx] = { month, prev, curr, units, date };
+      } else {
+        meterHistory.push({ month, prev, curr, units, date });
+      }
+
+      localStorage.setItem('submeter_reading_history_v4', JSON.stringify(meterHistory));
+
+      fetch('/api/save-reading', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ month, prev, curr, units, date })
+      }).catch(e => console.log('Offline/Static hosting mode used'));
+
+      renderHistoryTable();
+      document.getElementById('newHistMonth').value = '';
+      document.getElementById('newHistCurr').value = '';
+      document.getElementById('newHistDate').value = '';
+
+      syncSubmeterWithCurrentMonth();
+      calculateAll();
+    }
+
+    function openHistoryModal() {
+      renderHistoryTable();
+      document.getElementById('historyModal').classList.remove('hidden');
+    }
+
+    function closeHistoryModal() {
+      document.getElementById('historyModal').classList.add('hidden');
+    }
+
+    // 6. مہینہ سلیکٹر، اکتوبر 2026 چیکنگ و سب میٹر ربط
+    function getSelectedMonthCode() {
+      const monthSel = document.getElementById('billingMonthSelect');
+      const opt = monthSel.options[monthSel.selectedIndex];
+      const code = opt.getAttribute('data-code') || 'Oct';
+      const y = document.getElementById('billingYearSelect').value.slice(-2);
+      return `${code}-${y}`;
+    }
+
+    function isMonthBeforeOctober2026() {
+      const year = parseInt(document.getElementById('billingYearSelect').value) || 2026;
+      const monthSel = document.getElementById('billingMonthSelect');
+      const opt = monthSel.options[monthSel.selectedIndex];
+      const monthIdx = parseInt(opt.getAttribute('data-idx')) || 9;
+
+      if (year < 2026) return true;
+      if (year === 2026 && monthIdx < 9) return true;
+      return false;
+    }
+
+    function syncSubmeterWithCurrentMonth() {
+      const targetMonthCode = getSelectedMonthCode();
+      const foundRecord = meterHistory.find(r => r.month.toLowerCase() === targetMonthCode.toLowerCase());
+
+      const warningEl = document.getElementById('missingReadingWarning');
+      const badgeEl = document.getElementById('readingSyncStatusBadge');
+
+      if (foundRecord && foundRecord.curr > 0) {
+        document.getElementById('tenantPrevReading').value = foundRecord.prev;
+        document.getElementById('tenantCurrReading').value = foundRecord.curr;
+        warningEl.classList.add('hidden');
+        badgeEl.innerHTML = `<i class="fa-solid fa-link ml-1"></i> سب میٹر ریکارڈ (${foundRecord.month}) سے خودکار تصدیق شدہ (ریڈنگ تاریخ: ${foundRecord.date})`;
+        badgeEl.className = "text-[11px] text-emerald-700 font-bold block mt-0.5";
+      } else {
+        const lastKnown = meterHistory.length > 0 ? meterHistory[meterHistory.length - 1] : { curr: 0 };
+        document.getElementById('tenantPrevReading').value = lastKnown.curr;
+        document.getElementById('tenantCurrReading').value = '';
+        warningEl.classList.remove('hidden');
+        badgeEl.innerHTML = `<i class="fa-solid fa-circle-exclamation ml-1 text-amber-600"></i> ماہ ${targetMonthCode} کی ریڈنگ موجود نہیں ہے`;
+        badgeEl.className = "text-[11px] text-amber-700 font-bold block mt-0.5";
+      }
+    }
+
+    function onMonthOrYearChanged() {
+      const m = document.getElementById('billingMonthSelect').value;
+      const y = document.getElementById('billingYearSelect').value;
+      const monthStr = `${m} ${y}`;
+
+      document.getElementById('currentMonthBadge').innerText = `Month: ${monthStr}`;
+      document.getElementById('kpiMonth').innerText = `${monthStr}`;
+      document.getElementById('slipBillingMonthTextUpper').innerText = `${m.toUpperCase()}-${y}`;
+
+      const isPast = isMonthBeforeOctober2026();
+      const noRecNotice = document.getElementById('noRecordSlipNotice');
+      const actualContent = document.getElementById('actualSlipContent');
+      const actionBtns = document.getElementById('actionButtonsContainer');
+
+      if (isPast) {
+        noRecNotice.classList.remove('hidden');
+        actualContent.classList.add('hidden');
+        actionBtns.classList.add('opacity-40', 'pointer-events-none');
+      } else {
+        noRecNotice.classList.add('hidden');
+        actualContent.classList.remove('hidden');
+        actionBtns.classList.remove('opacity-40', 'pointer-events-none');
+        syncSubmeterWithCurrentMonth();
+      }
+
+      calculateAll();
+    }
+
+    // 7. ایڈوانس لیجر لاجک (سابقہ ٹیسٹ ڈیٹا صاف شدہ)
+    const initialAdvanceTotal = 50000;
+    const priorAdjustments = 20000;
+    const availableAdvancePool = initialAdvanceTotal - priorAdjustments;
+
+    // Remove any dummy 2025 test records from localStorage
+    let storedArchived = JSON.parse(localStorage.getItem('archived_advance_ledgers')) || [];
+    storedArchived = storedArchived.filter(l => !l.title.includes('2025'));
+    localStorage.setItem('archived_advance_ledgers', JSON.stringify(storedArchived));
+    let archivedLedgers = storedArchived;
+
+    function switchLedgerTab(tab) {
+      if (tab === 'active') {
+        document.getElementById('ledgerTabActive').classList.remove('hidden');
+        document.getElementById('ledgerTabArchived').classList.add('hidden');
+        document.getElementById('tabActiveLedgerBtn').className = "flex-1 py-2.5 border-b-2 border-rose-600 text-rose-700 bg-white font-black";
+        document.getElementById('tabArchivedLedgerBtn').className = "flex-1 py-2.5 text-slate-500 hover:text-slate-800 font-bold";
+      } else {
+        document.getElementById('ledgerTabActive').classList.add('hidden');
+        document.getElementById('ledgerTabArchived').classList.remove('hidden');
+        document.getElementById('tabArchivedLedgerBtn').className = "flex-1 py-2.5 border-b-2 border-rose-600 text-rose-700 bg-white font-black";
+        document.getElementById('tabActiveLedgerBtn').className = "flex-1 py-2.5 text-slate-500 hover:text-slate-800 font-bold";
+        renderArchivedLedgers();
+      }
+    }
+
+    function renderArchivedLedgers() {
+      const container = document.getElementById('archivedLedgersList');
+      if (archivedLedgers.length === 0) {
+        container.innerHTML = `
+          <div class="p-8 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200 space-y-2">
+            <div class="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center text-xl mx-auto">
+              <i class="fa-solid fa-folder-open"></i>
+            </div>
+            <p class="font-bold text-xs text-slate-700">کوئی سابقہ ایڈوانس ریکارڈ موجود نہیں ہے</p>
+            <p class="text-[11px] text-slate-400">جب موجودہ ایڈوانس سائیکل مکمل ہوگا تو وہ یہاں محفوظ و ظاہر ہوگا۔</p>
+          </div>
+        `;
+        return;
+      }
+      container.innerHTML = archivedLedgers.map(l => `
+        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 flex justify-between items-center font-mono">
+          <div>
+            <span class="font-extrabold text-slate-800 block font-sans">${l.title}</span>
+            <span class="text-[10px] text-slate-500 font-sans">Settled: ${l.settledDate}</span>
+          </div>
+          <div class="text-right">
+            <span class="font-black text-slate-900 block">Rs. ${l.totalAmount.toLocaleString()}</span>
+            <span class="bg-emerald-100 text-emerald-800 text-[9px] font-bold px-1.5 py-0.5 rounded-full font-sans">${l.status}</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function archiveCurrentLedger() {
+      archivedLedgers.unshift({
+        title: "Advance payment Sep-2026 (Ehsanullah)",
+        totalAmount: 50000,
+        settledDate: new Date().toLocaleDateString('en-GB'),
+        status: "Cleared"
+      });
+      localStorage.setItem('archived_advance_ledgers', JSON.stringify(archivedLedgers));
+      alert("ایڈوانس سائیکل کامیابی سے محفوظ ہو گیا!");
+      switchLedgerTab('archived');
+    }
+
+    function openLedgerModal() {
+      document.getElementById('ledgerModal').classList.remove('hidden');
+      switchLedgerTab('active');
+    }
+
+    function closeLedgerModal() {
+      document.getElementById('ledgerModal').classList.add('hidden');
+    }
+
+    function onAdvanceInputChanged() {
+      calculateAll();
+    }
+
+    function onWasaTotalInput() {
+      const wasaTotal = parseFloat(document.getElementById('wasaTotalBill').value) || 0;
+      if (wasaTotal > 0) {
+        const oneThird = Math.round(wasaTotal / 3);
+        document.getElementById('waterShareFinal').value = oneThird;
+      }
+      calculateAll();
+    }
+
+    function onGasTotalInput() {
+      const gasTotal = parseFloat(document.getElementById('gasTotalBill').value) || 0;
+      if (gasTotal > 0) {
+        const oneThird = Math.round(gasTotal / 3);
+        document.getElementById('gasShareFinal').value = oneThird;
+      }
+      calculateAll();
+    }
+
+    // 8. حساب کتاب کیلکولیشن
+    function calculateAll() {
+      const tName = document.getElementById('tenantName').value || 'احسان اللہ';
+      const tMeter = document.getElementById('tenantMeterNo').value.trim() || defaultSubmeterNo;
+      document.getElementById('slipTenantName').innerText = `${tName}`;
+      document.getElementById('slipMeterNo').innerText = tMeter;
+
+      const m1Ref = document.getElementById('m1MeterNumber').value.trim() || defaultM1Ref;
+      const m2Ref = document.getElementById('m2MeterNumber').value.trim() || defaultM2Ref;
+      document.getElementById('slipM1Ref').innerText = m1Ref;
+      document.getElementById('slipM2Ref').innerText = m2Ref;
+
+      const m1Units = parseFloat(document.getElementById('m1Units').value) || 0;
+      const m1Bill = parseFloat(document.getElementById('m1Bill').value) || 0;
+      const m2Units = parseFloat(document.getElementById('m2Units').value) || 0;
+      const m2Bill = parseFloat(document.getElementById('m2Bill').value) || 0;
+
+      const sumUnits = m1Units + m2Units;
+      const sumBill = m1Bill + m2Bill;
+
+      let unitRate = 0;
+      if (sumUnits > 0) {
+        unitRate = sumBill / sumUnits;
+      }
+
+      document.getElementById('sumWapdaUnits').innerText = sumUnits.toLocaleString();
+      document.getElementById('sumWapdaBill').innerText = sumBill.toLocaleString();
+      document.getElementById('calculatedUnitRate').innerText = unitRate.toFixed(2);
+      document.getElementById('appliedRateLabel').innerText = unitRate.toFixed(2);
+      document.getElementById('kpiRate').innerText = unitRate.toFixed(2);
+
+      const prev = parseFloat(document.getElementById('tenantPrevReading').value) || 0;
+      const currInput = document.getElementById('tenantCurrReading').value;
+      const curr = currInput !== '' ? parseFloat(currInput) : 0;
+      
+      let tenantUnits = 0;
+      let tenantElecCost = 0;
+
+      if (currInput !== '' && curr >= prev) {
+        tenantUnits = curr - prev;
+        tenantElecCost = Math.round(tenantUnits * unitRate);
+      }
+
+      document.getElementById('tenantUnitsConsumed').innerText = tenantUnits.toLocaleString();
+      document.getElementById('kpiUnits').innerText = tenantUnits.toLocaleString();
+      document.getElementById('tenantElecCost').innerText = tenantElecCost.toLocaleString();
+
+      const baseRent = parseFloat(document.getElementById('baseRent').value) || 0;
+      const internet = parseFloat(document.getElementById('internetCharge').value) || 0;
+      const water = parseFloat(document.getElementById('waterShareFinal').value) || 0;
+      const gas = parseFloat(document.getElementById('gasShareFinal').value) || 0;
+      const motorMaintenance = parseFloat(document.getElementById('motorMaintenanceCharge').value) || 0;
+
+      const deductName = document.getElementById('deductionName').value.trim() || 'Deduction';
+      const deductAmount = parseFloat(document.getElementById('deductionAmount').value) || 0;
+
+      const advancePaid = parseFloat(document.getElementById('advancePaid').value) || 0;
+      const remainingLedger = Math.max(0, availableAdvancePool - advancePaid);
+
+      document.getElementById('ledgerBadgeBalance').innerText = `Rs. ${remainingLedger.toLocaleString()}`;
+      document.getElementById('topLedgerBalanceBadge').innerText = `Rs. ${remainingLedger.toLocaleString()}`;
+      document.getElementById('modalCurrentAdjustment').innerText = advancePaid.toLocaleString();
+      document.getElementById('modalRemainingBalance').innerText = remainingLedger.toLocaleString();
+
+      const settleContainer = document.getElementById('settleLedgerBtnContainer');
+      if (remainingLedger === 0) {
+        settleContainer.classList.remove('hidden');
+      } else {
+        settleContainer.classList.add('hidden');
+      }
+
+      const rawTotal = baseRent + internet + tenantElecCost + water + motorMaintenance + gas;
+      const subtotal = Math.max(0, rawTotal - deductAmount);
+      const grandTotal = Math.max(0, subtotal - advancePaid);
+
+      document.getElementById('kpiGrandTotal').innerText = grandTotal.toLocaleString();
+
+      // اپڈیٹ انگلش رسید (تمام میتھ انگلش LTR میں بالکل سیدھا)
+      document.getElementById('slipPrev').innerText = prev;
+      document.getElementById('slipCurr').innerText = currInput !== '' ? curr : 'N/A';
+      document.getElementById('slipUnits').innerText = tenantUnits;
+      document.getElementById('slipUnitsSmall').innerText = tenantUnits;
+      document.getElementById('slipRate').innerText = unitRate.toFixed(2);
+      document.getElementById('slipRateSmall').innerText = unitRate.toFixed(2);
+      document.getElementById('slipWapdaBill').innerText = sumBill.toLocaleString();
+      document.getElementById('slipWapdaUnits').innerText = sumUnits.toLocaleString();
+      document.getElementById('slipElecTotal').innerText = tenantElecCost.toLocaleString();
+      document.getElementById('slipElecTotalSmall').innerText = tenantElecCost.toLocaleString();
+
+      document.getElementById('slipBaseRent').innerText = baseRent.toLocaleString();
+      document.getElementById('slipInternet').innerText = internet.toLocaleString();
+      document.getElementById('slipWater').innerText = water.toLocaleString();
+      document.getElementById('slipGas').innerText = gas.toLocaleString();
+      document.getElementById('slipMotor').innerText = motorMaintenance.toLocaleString();
+
+      const slipDeductRow = document.getElementById('slipDeductionRow');
+      if (deductAmount > 0) {
+        slipDeductRow.style.display = 'flex';
+        document.getElementById('slipDeductName').innerText = deductName;
+        document.getElementById('slipDeductAmount').innerText = deductAmount.toLocaleString();
+      } else {
+        slipDeductRow.style.display = 'none';
+      }
+
+      document.getElementById('slipSubtotal').innerText = subtotal.toLocaleString();
+
+      const advanceRow = document.getElementById('advanceSlipRow');
+      if (advancePaid > 0) {
+        advanceRow.style.display = 'flex';
+        document.getElementById('slipAdvance').innerText = advancePaid.toLocaleString();
+      } else {
+        advanceRow.style.display = 'none';
+      }
+
+      document.getElementById('slipGrandTotal').innerText = grandTotal.toLocaleString();
+    }
+
+    // 9. بل محفوظ اور لاک کرنے کا سسٹم (صرف ایڈمن)
+    let savedBills = JSON.parse(localStorage.getItem('saved_rental_bills_archive')) || [];
+
+    function saveAndLockCurrentBill() {
+      if (isMonthBeforeOctober2026()) {
+        alert("October 2026 سے پچھلے مہینوں کا بل محفوظ نہیں کیا جا سکتا۔");
+        return;
+      }
+
+      const monthSel = document.getElementById('billingMonthSelect').value;
+      const yearSel = document.getElementById('billingYearSelect').value;
+      const monthStr = `${monthSel} ${yearSel}`;
+
+      const tenant = document.getElementById('tenantName').value || 'احسان اللہ';
+      const prev = document.getElementById('tenantPrevReading').value;
+      const curr = document.getElementById('tenantCurrReading').value;
+      const units = document.getElementById('tenantUnitsConsumed').innerText;
+      const rate = document.getElementById('calculatedUnitRate').innerText;
+      const subtotal = document.getElementById('slipSubtotal').innerText;
+      const advance = document.getElementById('advancePaid').value;
+      const grandTotal = document.getElementById('slipGrandTotal').innerText;
+
+      onRefNumberChanged();
+
+      const billData = {
+        id: Date.now(),
+        month: monthStr,
+        tenant: tenant,
+        m1Ref: document.getElementById('m1MeterNumber').value,
+        m2Ref: document.getElementById('m2MeterNumber').value,
+        prevReading: prev,
+        currReading: curr,
+        units: units,
+        rate: rate,
+        subtotal: subtotal,
+        advance: advance,
+        grandTotal: grandTotal,
+        savedAt: new Date().toLocaleString('en-GB')
+      };
+
+      const existIdx = savedBills.findIndex(b => b.month.toLowerCase() === monthStr.toLowerCase());
+      if (existIdx >= 0) {
+        savedBills[existIdx] = billData;
+      } else {
+        savedBills.unshift(billData);
+      }
+
+      localStorage.setItem('saved_rental_bills_archive', JSON.stringify(savedBills));
+
+      fetch('/api/save-bill', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(billData)
+      }).catch(e => console.log('Offline/Static hosting mode used'));
+
+      renderSavedBillsTable();
+
+      const toast = document.getElementById('saveToast');
+      document.getElementById('saveToastText').innerText = `ماہ ${monthStr} کا بل کامیابی سے محفوظ و لاک کر دیا گیا ہے!`;
+      toast.classList.remove('hidden');
+      setTimeout(() => toast.classList.add('hidden'), 4000);
+    }
+
+    function renderSavedBillsTable() {
+      const tbody = document.getElementById('savedBillsTableBody');
+      const badge = document.getElementById('savedBillsCountBadge');
+      tbody.innerHTML = '';
+
+      badge.innerText = `${savedBills.length} بلز محفوظ ہیں`;
+
+      if (savedBills.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="8" class="text-center py-6 text-slate-400">کوئی محفوظ شدہ بل موجود نہیں ہے۔ ایڈمن اکاؤنٹ سے بل لاک کریں۔</td>
+          </tr>
+        `;
+        return;
+      }
+
+      savedBills.forEach((b) => {
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50 transition border-b border-slate-100";
+        tr.innerHTML = `
+          <td class="py-3 px-3 font-black text-slate-900">${b.month}</td>
+          <td class="py-3 px-3 font-bold text-slate-700">${b.tenant}</td>
+          <td class="py-3 px-3 text-center font-mono text-slate-600">${b.prevReading} - ${b.currReading}</td>
+          <td class="py-3 px-3 text-center font-mono font-bold text-amber-800">${b.units} U @ ${b.rate}</td>
+          <td class="py-3 px-3 font-mono font-bold text-slate-900">Rs. ${b.subtotal}</td>
+          <td class="py-3 px-3 font-mono font-bold text-rose-700">- Rs. ${parseFloat(b.advance || 0).toLocaleString()}</td>
+          <td class="py-3 px-3 font-mono font-black text-emerald-700 text-sm">Rs. ${b.grandTotal}</td>
+          <td class="py-3 px-3 text-center admin-only owner-only">
+            <button onclick="deleteSavedBill(${b.id})" class="text-rose-600 hover:text-rose-800 font-bold p-1" title="بل ڈیلیٹ کریں">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function deleteSavedBill(id) {
+      if (currentRole !== 'admin') {
+        alert("صرف ایڈمن کو بل ڈیلیٹ کرنے کی اجازت ہے۔");
+        return;
+      }
+      if (confirm("کیا آپ واقعی یہ محفوظ شدہ بل ریکارڈ ڈیلیٹ کرنا چاہتے ہیں؟")) {
+        savedBills = savedBills.filter(b => b.id !== id);
+        localStorage.setItem('saved_rental_bills_archive', JSON.stringify(savedBills));
+        renderSavedBillsTable();
+      }
+    }
+
+    // 10. کلاؤڈ مینیجر و بیک اپ فنکشنز
+    function openCloudModal() {
+      document.getElementById('cloudModal').classList.remove('hidden');
+    }
+
+    function closeCloudModal() {
+      document.getElementById('cloudModal').classList.add('hidden');
+    }
+
+    function exportDataBackup() {
+      const fullBackup = {
+        app: "Rental-Submeter-Billing-Manager",
+        exportedAt: new Date().toISOString(),
+        settings: {
+          m1Ref: localStorage.getItem('wapda_m1_ref') || defaultM1Ref,
+          m2Ref: localStorage.getItem('wapda_m2_ref') || defaultM2Ref,
+          submeterNo: localStorage.getItem('tenant_submeter_no') || defaultSubmeterNo
+        },
+        readings: meterHistory,
+        bills: savedBills,
+        archivedLedgers: archivedLedgers
+      };
+
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(fullBackup, null, 2));
+      const dlAnchor = document.createElement('a');
+      dlAnchor.setAttribute("href", dataStr);
+      dlAnchor.setAttribute("download", `rental_billing_backup_${Date.now()}.json`);
+      document.body.appendChild(dlAnchor);
+      dlAnchor.click();
+      dlAnchor.remove();
+    }
+
+    function importDataBackup(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (imported.readings) {
+            meterHistory = imported.readings;
+            localStorage.setItem('submeter_reading_history_v4', JSON.stringify(meterHistory));
+          }
+          if (imported.bills) {
+            savedBills = imported.bills;
+            localStorage.setItem('saved_rental_bills_archive', JSON.stringify(savedBills));
+          }
+          if (imported.archivedLedgers) {
+            archivedLedgers = imported.archivedLedgers;
+            localStorage.setItem('archived_advance_ledgers', JSON.stringify(archivedLedgers));
+          }
+          alert("بیک اپ ڈیٹا کامیابی سے ریسٹور ہو گیا!");
+          closeCloudModal();
+          location.reload();
+        } catch (err) {
+          alert("فائل پڑھنے میں غلطی ہوئی: " + err.message);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    // ابتدائی لوڈ
+    window.addEventListener('DOMContentLoaded', () => {
+      // Fetch default data from server or local static json if available
+      fetch('./data/bills.json').then(r => r.json()).then(data => {
+        if (!localStorage.getItem('saved_rental_bills_archive') && Array.isArray(data) && data.length > 0) {
+          savedBills = data;
+          localStorage.setItem('saved_rental_bills_archive', JSON.stringify(data));
+          renderSavedBillsTable();
+        }
+      }).catch(e => console.log('Static default'));
+
+      fetch('./data/readings.json').then(r => r.json()).then(data => {
+        if (!localStorage.getItem('submeter_reading_history_v4') && Array.isArray(data) && data.length > 0) {
+          meterHistory = data;
+          localStorage.setItem('submeter_reading_history_v4', JSON.stringify(data));
+          syncSubmeterWithCurrentMonth();
+          calculateAll();
+        }
+      }).catch(e => console.log('Static default'));
+
+      loadSavedReferenceNumbers();
+      applyRole(currentRole);
+      onMonthOrYearChanged();
+      calculateAll();
+      renderSavedBillsTable();
+    });
+  </script>
+</body>
+</html>

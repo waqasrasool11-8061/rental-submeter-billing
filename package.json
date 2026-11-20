@@ -1,0 +1,12 @@
+{
+  "name": "rental-submeter-billing",
+  "version": "1.0.0",
+  "description": "Rental & Sub-meter Billing Management System",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": ["rental", "submeter", "billing", "wapda"],
+  "author": "Waqas",
+  "license": "ISC"
+}

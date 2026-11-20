@@ -1,0 +1,14 @@
+{
+  "activeAdvance": {
+    "title": "Advance payment in September-2026",
+    "totalReceived": 50000,
+    "receivedMonth": "September 2026",
+    "adjustments": [
+      { "month": "August 2026", "amount": 10000 },
+      { "month": "September 2026", "amount": 10000 },
+      { "month": "October 2026", "amount": 10000 }
+    ],
+    "remainingBalance": 20000
+  },
+  "archivedLedgers": []
+}
