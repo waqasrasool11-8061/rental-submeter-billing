@@ -2064,6 +2064,14 @@
     let deferredInstallPrompt = null;
 
     if ('serviceWorker' in navigator) {
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!refreshing) {
+          refreshing = true;
+          window.location.reload();
+        }
+      });
+
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js?v=4')
           .then(reg => {
@@ -2071,6 +2079,17 @@
             reg.update();
           })
           .catch(err => console.log('[PWA] ServiceWorker registration failed:', err));
+      });
+    }
+
+    // ونڈو کیشے اسٹوریج سے پرانے کیشے کو خودکار ختم کریں
+    if ('caches' in window) {
+      caches.keys().then(keys => {
+        keys.forEach(k => {
+          if (k !== 'rental-billing-cache-v4') {
+            caches.delete(k);
+          }
+        });
       });
     }
 
