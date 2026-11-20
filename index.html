@@ -906,10 +906,10 @@
       <!-- موڈل کے اندر اکاؤنٹ سوئچر ٹیبز -->
       <div class="grid grid-cols-2 gap-1.5 bg-slate-100 p-1 rounded-xl text-xs">
         <button type="button" id="modalTabAdmin" onclick="setModalRole('admin')" class="py-2 rounded-lg font-black transition bg-amber-400 text-slate-900 shadow-xs flex items-center justify-center gap-1">
-          <i class="fa-solid fa-user-gear"></i> ایڈمن (23221)
+          <i class="fa-solid fa-user-gear"></i> ایڈمن اکاؤنٹ
         </button>
         <button type="button" id="modalTabTenant" onclick="setModalRole('tenant')" class="py-2 rounded-lg font-bold transition text-slate-600 hover:text-slate-900 flex items-center justify-center gap-1">
-          <i class="fa-solid fa-user"></i> کرائے دار (احسان اللہ)
+          <i class="fa-solid fa-user"></i> کرائے دار اکاؤنٹ
         </button>
       </div>
 
@@ -1126,14 +1126,14 @@
         if (tabAdmin) tabAdmin.className = "py-2 rounded-lg font-black text-xs transition bg-amber-400 text-slate-900 shadow-xs flex items-center justify-center gap-1";
         if (tabTenant) tabTenant.className = "py-2 rounded-lg font-bold text-xs transition text-slate-600 hover:text-slate-900 flex items-center justify-center gap-1";
         title.innerText = "ایڈمن اکاؤنٹ لاگ ان";
-        subtitle.innerText = "ایڈمن کا پاسورڈ درج کریں";
-        passInput.placeholder = "ایڈمن پاسورڈ (23221)...";
+        subtitle.innerText = "سیکیورٹی پن / پاسورڈ درج کریں";
+        passInput.placeholder = "پاسورڈ درج کریں...";
       } else {
         if (tabTenant) tabTenant.className = "py-2 rounded-lg font-black text-xs transition bg-emerald-400 text-slate-900 shadow-xs flex items-center justify-center gap-1";
         if (tabAdmin) tabAdmin.className = "py-2 rounded-lg font-bold text-xs transition text-slate-600 hover:text-slate-900 flex items-center justify-center gap-1";
-        title.innerText = "کرائے دار اکاؤنٹ لاگ ان (احسان اللہ)";
-        subtitle.innerText = "کرائے دار کا پاسورڈ درج کریں";
-        passInput.placeholder = "کرائے دار پاسورڈ (0027710)...";
+        title.innerText = "کرائے دار اکاؤنٹ لاگ ان";
+        subtitle.innerText = "سیکیورٹی پن / پاسورڈ درج کریں";
+        passInput.placeholder = "پاسورڈ درج کریں...";
       }
       setTimeout(() => passInput.focus(), 80);
     }
@@ -2065,9 +2065,9 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=3')
+        navigator.serviceWorker.register('./sw.js?v=4')
           .then(reg => {
-            console.log('[PWA] ServiceWorker registered v3:', reg.scope);
+            console.log('[PWA] ServiceWorker registered v4:', reg.scope);
             reg.update();
           })
           .catch(err => console.log('[PWA] ServiceWorker registration failed:', err));

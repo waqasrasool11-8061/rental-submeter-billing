@@ -1,5 +1,5 @@
 // Service Worker for Rental Sub-Meter & Billing Portal PWA
-const CACHE_NAME = 'rental-billing-cache-v3';
+const CACHE_NAME = 'rental-billing-cache-v4';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
