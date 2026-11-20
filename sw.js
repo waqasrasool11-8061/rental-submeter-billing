@@ -1,11 +1,16 @@
 // Service Worker for Rental Sub-Meter & Billing Portal PWA
-const CACHE_NAME = 'rental-billing-cache-v1';
+const CACHE_NAME = 'rental-billing-cache-v2';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './manifest.json',
+  './APP%20ICON.jpg',
   './icons/icon-192.png',
   './icons/icon-512.png',
+  './icons/icon-maskable-192.png',
+  './icons/icon-maskable-512.png',
+  './icons/favicon.png',
+  './icons/apple-touch-icon.png',
   './data/bills.json',
   './data/readings.json',
   './data/settings.json',
@@ -37,7 +42,6 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Network first for API/GitHub raw data, cache fallback for assets
   if (event.request.url.includes('api.github.com') || event.request.url.includes('raw.githubusercontent.com')) {
     event.respondWith(
       fetch(event.request).catch(() => caches.match(event.request))

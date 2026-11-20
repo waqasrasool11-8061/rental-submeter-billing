@@ -5,14 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>رینٹل سب میٹر اینڈ بلنگ مینیجر | Rental Billing Portal</title>
   
-  <!-- PWA Manifest & Icons -->
+  <!-- PWA Manifest & App Icons (Using user's APP ICON.jpg) -->
   <link rel="manifest" href="./manifest.json">
   <meta name="theme-color" content="#064e3b">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="بلنگ پورٹل">
-  <link rel="apple-touch-icon" href="./icons/icon-192.png">
-  <link rel="icon" type="image/png" href="./icons/icon-192.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+  <link rel="icon" type="image/jpeg" href="./APP%20ICON.jpg">
+  <link rel="apple-touch-icon" sizes="192x192" href="./icons/apple-touch-icon.png">
+  <link rel="apple-touch-icon" href="./APP%20ICON.jpg">
 
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -22,8 +24,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
-  <!-- html2pdf for direct mobile/desktop PDF download with auto month name -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <!-- High precision PDF & Canvas Libraries for 100% Single-Page A4 PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
   <style>
     body {
@@ -49,6 +52,17 @@
       border-color: #cbd5e1 !important;
     }
     @media print {
+      @page {
+        size: A4 portrait;
+        margin: 5mm;
+      }
+      html, body {
+        width: 100%;
+        height: 100%;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+      }
       body * {
         visibility: hidden;
       }
@@ -60,10 +74,14 @@
         left: 0;
         top: 0;
         width: 100% !important;
+        max-width: 100% !important;
         margin: 0 !important;
         padding: 0 !important;
-        border: none !important;
+        border: 1.5px solid #0f172a !important;
+        border-radius: 12px !important;
         box-shadow: none !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
       }
     }
     input, select, button {
@@ -84,11 +102,9 @@
   <header class="bg-emerald-900 text-white shadow-md sticky top-0 z-40 border-b border-emerald-800">
     <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-3">
       
-      <!-- برانڈنگ لوگو و ٹائٹل -->
+      <!-- برانڈنگ لوگو (صارف کی فراہم کردہ تصویر APP ICON.jpg) و ٹائٹل -->
       <div class="flex items-center space-x-3 space-x-reverse">
-        <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-600 to-emerald-800 flex items-center justify-center text-xl shadow-md border border-emerald-500/40">
-          <i class="fa-solid fa-bolt-lightning text-amber-300"></i>
-        </div>
+        <img src="./APP%20ICON.jpg" alt="App Icon" class="w-10 h-10 rounded-2xl object-cover shadow-md border-2 border-amber-400">
         <div>
           <div class="flex items-center gap-2">
             <h1 class="text-base sm:text-lg font-black tracking-wide text-white">رینٹل سب میٹر اینڈ بلنگ مینیجر</h1>
@@ -595,18 +611,21 @@
 
       </div>
 
-      <!-- ================= کالم 2: لائیو رسید (انگلش LTR فارمیٹ میں) ================= -->
+      <!-- ================= کالم 2: لائیو رسید (مکمل فکسڈ سنگل پیج انگلش LTR لے آؤٹ) ================= -->
       <div class="lg:col-span-5 space-y-4 lg:sticky lg:top-20">
 
-        <!-- رسید کارڈ: مکمل انگلش LTR فارمیٹ -->
+        <!-- رسید کارڈ: فکسڈ سائز، مکمل سنگل پیج A4 فِٹ ڈیزائن -->
         <div id="printable-slip" class="en-slip bg-white rounded-2xl sm:rounded-3xl shadow-xl border-2 border-slate-300 overflow-hidden max-w-md mx-auto lg:max-w-none w-full">
           
-          <!-- ہیڈر -->
-          <div class="bg-slate-900 text-white p-4 text-center">
-            <h3 class="font-black text-lg tracking-wider uppercase font-mono">
-              BILLING MONTH: <span id="slipBillingMonthTextUpper" class="text-yellow-300">OCTOBER-2026</span>
-            </h3>
-            <p class="text-[11px] text-emerald-300 font-bold mt-0.5 tracking-wide uppercase">
+          <!-- رسید ہیڈر مع صارف کی تصویر (APP ICON.jpg) -->
+          <div class="bg-slate-900 text-white py-3 px-4 text-center">
+            <div class="flex items-center justify-center gap-2.5">
+              <img src="./APP%20ICON.jpg" alt="Logo" class="w-6 h-6 rounded-md object-cover border border-amber-400">
+              <h3 class="font-black text-base sm:text-lg tracking-wider uppercase font-mono">
+                BILLING MONTH: <span id="slipBillingMonthTextUpper" class="text-yellow-300">OCTOBER-2026</span>
+              </h3>
+            </div>
+            <p class="text-[10px] text-emerald-300 font-bold mt-0.5 tracking-wide uppercase">
               Monthly Rental & Sub-Meter Invoice
             </p>
           </div>
@@ -622,28 +641,28 @@
             </p>
           </div>
 
-          <!-- اصل رسید کا مواد (انگلش LTR) -->
-          <div id="actualSlipContent" class="p-4 sm:p-5 space-y-3 text-xs text-slate-800">
+          <!-- اصل رسید کا مواد (انگلش LTR کمپیکٹ فِٹ) -->
+          <div id="actualSlipContent" class="p-3.5 sm:p-4 space-y-2.5 text-xs text-slate-800">
 
             <!-- کرائے دار معلومات -->
-            <div class="flex justify-between items-center pb-2.5 border-b border-dashed border-slate-300">
+            <div class="flex justify-between items-center pb-2 border-b border-dashed border-slate-300">
               <div>
-                <span class="text-[10px] text-slate-400 block uppercase font-bold tracking-wider">Tenant Name:</span>
-                <span class="font-black text-slate-900 text-sm" id="slipTenantName">Ehsanullah (احسان اللہ)</span>
+                <span class="text-[9px] text-slate-400 block uppercase font-bold tracking-wider">Tenant Name:</span>
+                <span class="font-black text-slate-900 text-xs sm:text-sm" id="slipTenantName">Ehsanullah (احسان اللہ)</span>
               </div>
               <div class="text-right">
-                <span class="text-[10px] text-slate-400 block uppercase font-bold tracking-wider">Sub-Meter No:</span>
+                <span class="text-[9px] text-slate-400 block uppercase font-bold tracking-wider">Sub-Meter No:</span>
                 <span class="font-black text-slate-900 text-xs font-mono" id="slipMeterNo">0027710</span>
               </div>
             </div>
 
             <!-- واپڈا 2 میٹرز کا شفاف حساب (WAPDA Dual Meters Calculation) -->
-            <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2">
-              <div class="flex justify-between items-center text-[11px] font-bold border-b border-slate-200/80 pb-1.5">
+            <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200 space-y-1.5">
+              <div class="flex justify-between items-center text-[11px] font-bold border-b border-slate-200/80 pb-1">
                 <span class="text-slate-600 uppercase">Total Electric Bill</span>
                 <span class="font-mono text-slate-900 font-black">Rs. <span id="slipWapdaBill">6,540</span></span>
               </div>
-              <div class="flex justify-between items-center text-[11px] font-bold border-b border-slate-200/80 pb-1.5">
+              <div class="flex justify-between items-center text-[11px] font-bold border-b border-slate-200/80 pb-1">
                 <span class="text-slate-600 uppercase">Total WAPDA Units</span>
                 <span class="font-mono text-slate-900 font-black"><span id="slipWapdaUnits">279</span> Units</span>
               </div>
@@ -658,22 +677,22 @@
             </div>
 
             <!-- سب میٹر بجلی کا درست حساب (Mathematical exact breakdown: 29 Units × Rs. 23.44 = Rs. 680) -->
-            <div class="bg-amber-50/80 p-3 rounded-xl border border-amber-300 space-y-1.5">
+            <div class="bg-amber-50/80 p-2.5 rounded-xl border border-amber-300 space-y-1">
               <div class="flex justify-between items-center font-black text-amber-950 text-xs">
                 <span class="uppercase tracking-wide">⚡ Electric Bill (Sub-Meter)</span>
-                <span class="text-sm font-mono text-amber-800">Rs. <span id="slipElecTotal">680</span></span>
+                <span class="text-xs sm:text-sm font-mono text-amber-800">Rs. <span id="slipElecTotal">680</span></span>
               </div>
-              <div class="text-[11px] text-slate-600 flex justify-between items-center font-mono border-t border-amber-200/80 pt-1">
+              <div class="text-[10px] sm:text-[11px] text-slate-600 flex justify-between items-center font-mono border-t border-amber-200/80 pt-1">
                 <span>Reading: <span id="slipPrev">2121</span> to <span id="slipCurr">2150</span></span>
                 <span class="font-bold text-slate-800">Diff: <span id="slipUnits">29</span> Units</span>
               </div>
-              <div class="text-[11px] text-amber-900 font-mono font-bold bg-white/90 p-1.5 rounded border border-amber-200">
+              <div class="text-[10px] sm:text-[11px] text-amber-900 font-mono font-bold bg-white/90 p-1 rounded border border-amber-200">
                 Calculation: <span id="slipUnitsSmall">29</span> Units × Rs. <span id="slipRateSmall">23.44</span> = Rs. <span id="slipElecTotalSmall">680</span>
               </div>
             </div>
 
             <!-- ماہانہ یوٹیلیٹیز کی فہرست -->
-            <div class="space-y-1.5 pt-1 border-t border-slate-200">
+            <div class="space-y-1 pt-1 border-t border-slate-200">
               <div class="flex justify-between items-center py-0.5">
                 <span class="text-slate-600 font-bold">💧 Water Bill (WASA 1/3 Share):</span>
                 <span class="font-mono font-black text-slate-900">Rs. <span id="slipWater">347</span></span>
@@ -701,40 +720,40 @@
             </div>
 
             <!-- کٹوتیاں اور کل میزان -->
-            <div class="pt-2.5 border-t-2 border-slate-900 space-y-2">
+            <div class="pt-2 border-t-2 border-slate-900 space-y-1.5">
               
               <!-- متفرق کٹوتی -->
-              <div id="slipDeductionRow" class="flex justify-between items-center bg-rose-50 p-2 rounded-xl border border-rose-200 text-rose-900 font-bold">
+              <div id="slipDeductionRow" class="flex justify-between items-center bg-rose-50 p-1.5 rounded-xl border border-rose-200 text-rose-900 font-bold">
                 <div>
                   <span class="block">Less Deduction (<span id="slipDeductName">گندم پسوائی</span>):</span>
                 </div>
                 <span class="font-mono font-black text-rose-700">- Rs. <span id="slipDeductAmount">400</span></span>
               </div>
 
-              <!-- TOTAL AMOUNT (بڑا، بولڈ اور واضح) -->
-              <div class="p-3 bg-amber-50 rounded-xl border-2 border-amber-300 flex justify-between items-center shadow-xs">
+              <!-- TOTAL AMOUNT -->
+              <div class="p-2.5 bg-amber-50 rounded-xl border-2 border-amber-300 flex justify-between items-center shadow-2xs">
                 <div>
                   <span class="text-xs font-black text-amber-950 block uppercase tracking-wide">TOTAL AMOUNT:</span>
-                  <span class="text-[10px] text-slate-500 font-medium">(Utilities minus deduction)</span>
+                  <span class="text-[9px] text-slate-500 font-medium">(Utilities minus deduction)</span>
                 </div>
-                <div class="text-xl sm:text-2xl font-black text-slate-900 font-mono tracking-tight">
+                <div class="text-lg sm:text-xl font-black text-slate-900 font-mono tracking-tight">
                   Rs. <span id="slipSubtotal">11,837</span>
                 </div>
               </div>
 
               <!-- ADVANCE IF PAID -->
-              <div id="advanceSlipRow" class="flex justify-between items-center bg-slate-50 p-2 rounded-xl border border-slate-200 font-bold text-rose-700">
+              <div id="advanceSlipRow" class="flex justify-between items-center bg-slate-50 p-1.5 rounded-xl border border-slate-200 font-bold text-rose-700">
                 <span class="uppercase">Advance If Paid:</span>
                 <span class="font-mono font-black">- Rs. <span id="slipAdvance">10,000</span></span>
               </div>
 
               <!-- TOTAL PAYABLE BILL -->
-              <div class="flex justify-between items-center pt-2.5 border-t-2 border-dashed border-slate-300">
+              <div class="flex justify-between items-center pt-2 border-t-2 border-dashed border-slate-300">
                 <div>
                   <span class="text-xs text-slate-600 uppercase block font-black">TOTAL PAYABLE BILL:</span>
-                  <span class="text-[10px] text-emerald-700 font-bold uppercase">Net Payable Amount</span>
+                  <span class="text-[9px] text-emerald-700 font-bold uppercase">Net Payable Amount</span>
                 </div>
-                <div class="text-2xl sm:text-3xl font-black text-emerald-700 font-mono tracking-tight">
+                <div class="text-xl sm:text-2xl font-black text-emerald-700 font-mono tracking-tight">
                   Rs. <span id="slipGrandTotal">1,827</span>
                 </div>
               </div>
@@ -744,7 +763,7 @@
           </div>
 
           <!-- فوٹر -->
-          <div class="bg-slate-100 px-4 py-2.5 text-center text-[10px] text-slate-500 font-bold border-t border-slate-200 uppercase tracking-wider">
+          <div class="bg-slate-100 px-4 py-2 text-center text-[9px] text-slate-500 font-bold border-t border-slate-200 uppercase tracking-wider">
             Computerized Invoice • Verified Calculation • Thank You
           </div>
 
@@ -765,7 +784,7 @@
           
           <!-- دو طرفہ پرنٹ و پی ڈی ایف ڈاؤن لوڈ گرڈ -->
           <div class="grid grid-cols-2 gap-2">
-            <!-- پی ڈی ایف ڈاؤن لوڈ (آٹومیٹک نام و لوکیشن سلیکٹر) -->
+            <!-- پی ڈی ایف ڈاؤن لوڈ (100% سنگل پیج A4 فِٹ) -->
             <button id="btnDownloadPDF" onclick="downloadSlipPDF()" class="w-full py-2.5 px-2.5 bg-rose-700 hover:bg-rose-800 text-white font-extrabold rounded-xl shadow-xs flex items-center justify-center gap-1.5 transition text-xs sm:text-sm active:scale-95">
               <i class="fa-solid fa-file-pdf"></i> <span>PDF ڈاؤن لوڈ کریں</span>
             </button>
@@ -820,12 +839,10 @@
 
   </main>
 
-  <!-- ================= فلوٹنگ موبائل ایپ انسٹال بینر (PWA Native Prompt) ================= -->
+  <!-- ================= فلوٹنگ موبائل ایپ انسٹال بینر مع صارف کا آئیکن (PWA Native Prompt) ================= -->
   <div id="pwaInstallBanner" class="hidden fixed bottom-4 left-3 right-3 sm:left-auto sm:right-6 sm:bottom-6 sm:max-w-md bg-gradient-to-r from-emerald-950 via-slate-900 to-emerald-900 text-white p-3.5 sm:p-4 rounded-2xl shadow-2xl border-2 border-amber-400 z-50 flex items-center justify-between gap-3 pwa-banner-anim">
     <div class="flex items-center gap-2.5">
-      <div class="w-10 h-10 rounded-xl bg-amber-400 text-slate-950 flex items-center justify-center text-xl font-black shadow-md shrink-0">
-        <i class="fa-solid fa-bolt"></i>
-      </div>
+      <img src="./APP%20ICON.jpg" alt="App Logo" class="w-10 h-10 rounded-xl object-cover shadow-md shrink-0 border border-amber-400">
       <div>
         <h4 class="font-black text-xs sm:text-sm text-amber-300 leading-tight">موبائل ایپ انسٹال کریں</h4>
         <p class="text-[10px] sm:text-[11px] text-slate-200 mt-0.5">ایک کلک میں بغیر پلے اسٹور فون میں انسٹال کریں</p>
@@ -1842,14 +1859,14 @@
       }
     }
 
-    // 10. پی ڈی ایف ڈاؤن لوڈ و پرنٹنگ مع خودکار نام و سیو لوکیشن
+    // 10. پی ڈی ایف ڈاؤن لوڈ و پرنٹنگ (100% سنگل پیج A4 فِٹ مع خودکار نام و سیو لوکیشن)
     function getSlipCleanFilename() {
       const m = document.getElementById('billingMonthSelect').value || 'Month';
       const y = document.getElementById('billingYearSelect').value || '2026';
       return `Rental_Bill_${m}_${y}_Ehsanullah`;
     }
 
-    // پرنٹ رسید (براؤزر اسکرپٹ سے عنوان خودکار تبدیل ہوتا ہے تاکہ پی ڈی ایف نام سیٹ ہو سکے)
+    // پرنٹ رسید (ٹائٹل خودکار اپڈیٹ تاکہ پی ڈی ایف پرنٹ میں بھی یہی نام آئے)
     function printSlipWithDynamicTitle() {
       if (isMonthBeforeOctober2026()) {
         alert("October 2026 سے پچھلے مہینوں کی رسید دستیاب نہیں ہے۔");
@@ -1861,7 +1878,7 @@
       setTimeout(() => { document.title = originalTitle; }, 1500);
     }
 
-    // براہ راست پی ڈی ایف ڈاؤن لوڈ (موبائل و کمپیوٹر پر لوکیشن پوچھے گا)
+    // 100% گارنٹی شدہ سنگل پیج A4 پی ڈی ایف ڈاؤن لوڈ (کوئی پیج بریک یا کٹنگ نہیں ہوگی)
     function downloadSlipPDF() {
       if (isMonthBeforeOctober2026()) {
         alert("October 2026 سے پچھلے مہینوں کی رسید دستیاب نہیں ہے۔");
@@ -1873,28 +1890,50 @@
 
       const toast = document.getElementById('saveToast');
       const toastText = document.getElementById('saveToastText');
-      toastText.innerHTML = `<i class="fa-solid fa-spinner fa-spin ml-1 text-emerald-200"></i> پی ڈی ایف فائل تیار ہو رہی ہے...`;
+      toastText.innerHTML = `<i class="fa-solid fa-spinner fa-spin ml-1 text-emerald-200"></i> سنگل پیج پی ڈی ایف تیار ہو رہی ہے...`;
       toast.classList.remove('hidden');
 
-      const opt = {
-        margin: [10, 10, 10, 10],
-        filename: filename,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2.2, useCORS: true, letterRendering: true, backgroundColor: '#ffffff' },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-      };
+      // html2canvas کے ذریعے اسکیلڈ رینڈرنگ
+      html2canvas(element, {
+        scale: 2.5,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        scrollY: -window.scrollY,
+        scrollX: 0
+      }).then(canvas => {
+        const imgData = canvas.toDataURL('image/jpeg', 0.98);
+        const { jsPDF } = window.jspdf || window;
+        const pdf = new jsPDF('p', 'mm', 'a4');
 
-      if (window.html2pdf) {
-        html2pdf().set(opt).from(element).save().then(() => {
-          toastText.innerHTML = `<i class="fa-solid fa-circle-check ml-1 text-emerald-200"></i> پی ڈی ایف بنام <strong>${filename}</strong> محفوظ ہو گئی!`;
-          setTimeout(() => toast.classList.add('hidden'), 4000);
-        }).catch(err => {
-          console.error('html2pdf fallback:', err);
-          printSlipWithDynamicTitle();
-        });
-      } else {
+        const pageWidth = 210;
+        const pageHeight = 297;
+        const marginX = 12; // 12mm بائیں و دائیں
+        const marginY = 8;  // صرف 8mm اوپر تاکہ اوپر زیادہ خالی جگہ نہ بچے
+        const maxW = pageWidth - (marginX * 2); // 186mm
+        const maxH = pageHeight - (marginY * 2); // 281mm
+
+        let renderW = maxW;
+        let renderH = (canvas.height * renderW) / canvas.width;
+
+        // اگر اونچائی صفحے سے زیادہ ہو تو خودکار اسکیل ڈاؤن تاکہ لازماً 1 ہی صفحے پر مکمل آئے
+        if (renderH > maxH) {
+          renderH = maxH;
+          renderW = (canvas.width * renderH) / canvas.height;
+        }
+
+        const posX = marginX + ((maxW - renderW) / 2);
+        const posY = marginY;
+
+        pdf.addImage(imgData, 'JPEG', posX, posY, renderW, renderH, undefined, 'FAST');
+        pdf.save(filename);
+
+        toastText.innerHTML = `<i class="fa-solid fa-circle-check ml-1 text-emerald-200"></i> سنگل پیج پی ڈی ایف بنام <strong>${filename}</strong> محفوظ ہو گئی!`;
+        setTimeout(() => toast.classList.add('hidden'), 4000);
+      }).catch(err => {
+        console.error('PDF error, falling back to print:', err);
         printSlipWithDynamicTitle();
-      }
+      });
     }
 
     // 11. موبائل پی ڈبلیو اے ایپ انسٹال ہینڈلر (PWA Mobile App)
@@ -1912,7 +1951,6 @@
       e.preventDefault();
       deferredInstallPrompt = e;
 
-      // Show bottom install banner if not dismissed this session
       const banner = document.getElementById('pwaInstallBanner');
       if (banner && !sessionStorage.getItem('pwa_banner_dismissed')) {
         banner.classList.remove('hidden');
