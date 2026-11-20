@@ -40,12 +40,16 @@
       text-align: left !important;
     }
     .tenant-mode .admin-only,
-    .tenant-mode .owner-only {
+    .tenant-mode .owner-only,
+    .logged-out-mode .admin-only,
+    .logged-out-mode .owner-only {
       display: none !important;
     }
     .tenant-mode input:not([type="button"]):not([type="submit"]),
     .tenant-mode select.admin-field,
-    .tenant-mode select.owner-field {
+    .tenant-mode select.owner-field,
+    .logged-out-mode input:not([type="button"]):not([type="submit"]),
+    .logged-out-mode select {
       pointer-events: none !important;
       background-color: #f1f5f9 !important;
       color: #334155 !important;
@@ -142,13 +146,17 @@
           <i class="fa-solid fa-mobile-screen-button text-amber-950"></i> <span>ایپ انسٹال کریں</span>
         </button>
 
-        <!-- اکاؤنٹ سوئچر (ایڈمن و کرائے دار) -->
+        <!-- اکاؤنٹ سوئچر (ایڈمن و کرائے دار مع لاگ آؤٹ) -->
         <div class="flex items-center bg-emerald-950/90 p-1 rounded-xl border border-emerald-600/50 text-xs shadow-inner">
-          <button type="button" id="roleBtnAdmin" onclick="promptLogin('admin')" class="px-3 py-1.5 rounded-lg font-extrabold transition bg-amber-400 text-slate-900 shadow-sm flex items-center gap-1.5">
-            <i class="fa-solid fa-user-gear text-[12px] text-amber-950"></i> ایڈمن اکاؤنٹ
+          <button type="button" id="roleBtnAdmin" onclick="promptLogin('admin')" class="px-2.5 sm:px-3 py-1.5 rounded-lg font-extrabold transition text-emerald-200 hover:text-white flex items-center gap-1.5">
+            <i class="fa-solid fa-user-gear text-[12px]"></i> <span id="adminBtnLabel">ایڈمن لاگ ان</span>
           </button>
-          <button type="button" id="roleBtnTenant" onclick="promptLogin('tenant')" class="px-3 py-1.5 rounded-lg font-extrabold transition text-emerald-200 hover:text-white flex items-center gap-1.5">
-            <i class="fa-solid fa-user text-[11px]"></i> کرائے دار اکاؤنٹ
+          <button type="button" id="roleBtnTenant" onclick="promptLogin('tenant')" class="px-2.5 sm:px-3 py-1.5 rounded-lg font-extrabold transition text-emerald-200 hover:text-white flex items-center gap-1.5">
+            <i class="fa-solid fa-user text-[11px]"></i> <span id="tenantBtnLabel">کرائے دار لاگ ان</span>
+          </button>
+          <!-- لاگ آؤٹ بٹن -->
+          <button type="button" id="btnLogout" onclick="logoutUser()" class="hidden px-2.5 py-1.5 rounded-lg font-black text-rose-300 hover:text-white hover:bg-rose-900/80 transition flex items-center gap-1 border-r border-emerald-700/60 mr-1" title="اکاؤنٹ لاگ آؤٹ کریں">
+            <i class="fa-solid fa-right-from-bracket text-rose-400"></i> <span>لاگ آؤٹ</span>
           </button>
         </div>
 
@@ -883,8 +891,18 @@
         <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center text-xl mx-auto shadow-inner">
           <i class="fa-solid fa-shield-halved"></i>
         </div>
-        <h3 class="font-extrabold text-base text-slate-900" id="modalRoleTitle">ایڈمن اکاؤنٹ لاگ ان</h3>
+        <h3 class="font-extrabold text-base text-slate-900" id="modalRoleTitle">اکاؤنٹ لاگ ان</h3>
         <p class="text-xs text-slate-500 font-medium" id="modalRoleSubtitle">سیکیورٹی پن / پاسورڈ درج کریں</p>
+      </div>
+
+      <!-- موڈل کے اندر اکاؤنٹ سوئچر ٹیبز -->
+      <div class="grid grid-cols-2 gap-1.5 bg-slate-100 p-1 rounded-xl text-xs">
+        <button type="button" id="modalTabAdmin" onclick="setModalRole('admin')" class="py-2 rounded-lg font-black transition bg-amber-400 text-slate-900 shadow-xs flex items-center justify-center gap-1">
+          <i class="fa-solid fa-user-gear"></i> ایڈمن (23221)
+        </button>
+        <button type="button" id="modalTabTenant" onclick="setModalRole('tenant')" class="py-2 rounded-lg font-bold transition text-slate-600 hover:text-slate-900 flex items-center justify-center gap-1">
+          <i class="fa-solid fa-user"></i> کرائے دار (احسان اللہ)
+        </button>
       </div>
 
       <div>
@@ -1064,8 +1082,11 @@
   <!-- ================= جاوا اسکرپٹ لاجک ================= -->
   <script>
     // 1. کردار اور پاسورڈ سسٹم (Admin Password: 23221 | Tenant: 0027710)
-    let currentRole = localStorage.getItem('active_user_role') || 'admin';
-    let pendingLoginRole = null;
+    // ہر دفعہ ایپ آن ہونے پر لازماً لاگ آؤٹ حالت میں کھلے گی تاکہ دوبارہ لاگ ان کرنا پڑے
+    localStorage.removeItem('active_user_role');
+    sessionStorage.removeItem('active_user_role');
+    let currentRole = 'logged_out';
+    let pendingLoginRole = 'admin';
 
     const ADMIN_PASSWORD = "23221";
     const TENANT_PASSWORD = "0027710";
@@ -1082,54 +1103,70 @@
       }
     }
 
-    function promptLogin(targetRole) {
-      if (targetRole === 'owner') targetRole = 'admin';
-      if (targetRole === currentRole) return;
-      pendingLoginRole = targetRole;
-
+    function setModalRole(role) {
+      if (role === 'owner') role = 'admin';
+      pendingLoginRole = role;
+      const tabAdmin = document.getElementById('modalTabAdmin');
+      const tabTenant = document.getElementById('modalTabTenant');
       const title = document.getElementById('modalRoleTitle');
       const subtitle = document.getElementById('modalRoleSubtitle');
       const passInput = document.getElementById('loginPasswordInput');
       const err = document.getElementById('loginErrorMsg');
-
-      passInput.value = '';
       err.classList.add('hidden');
 
-      if (targetRole === 'admin') {
-        title.innerText = "ایڈمن اکاؤنٹ لاگ ان (Admin Login)";
-        subtitle.innerText = "ایڈمن کا پاسورڈ (23221) درج کریں";
+      if (role === 'admin') {
+        if (tabAdmin) tabAdmin.className = "py-2 rounded-lg font-black text-xs transition bg-amber-400 text-slate-900 shadow-xs flex items-center justify-center gap-1";
+        if (tabTenant) tabTenant.className = "py-2 rounded-lg font-bold text-xs transition text-slate-600 hover:text-slate-900 flex items-center justify-center gap-1";
+        title.innerText = "ایڈمن اکاؤنٹ لاگ ان";
+        subtitle.innerText = "ایڈمن کا پاسورڈ درج کریں";
+        passInput.placeholder = "ایڈمن پاسورڈ (23221)...";
       } else {
+        if (tabTenant) tabTenant.className = "py-2 rounded-lg font-black text-xs transition bg-emerald-400 text-slate-900 shadow-xs flex items-center justify-center gap-1";
+        if (tabAdmin) tabAdmin.className = "py-2 rounded-lg font-bold text-xs transition text-slate-600 hover:text-slate-900 flex items-center justify-center gap-1";
         title.innerText = "کرائے دار اکاؤنٹ لاگ ان (احسان اللہ)";
-        subtitle.innerText = "کرائے دار کا پاسورڈ (0027710) درج کریں";
+        subtitle.innerText = "کرائے دار کا پاسورڈ درج کریں";
+        passInput.placeholder = "کرائے دار پاسورڈ (0027710)...";
       }
+      setTimeout(() => passInput.focus(), 80);
+    }
 
+    function promptLogin(targetRole) {
+      if (targetRole === 'owner') targetRole = 'admin';
       document.getElementById('loginModal').classList.remove('hidden');
-      setTimeout(() => passInput.focus(), 100);
+      document.getElementById('loginPasswordInput').value = '';
+      document.getElementById('loginErrorMsg').classList.add('hidden');
+      setModalRole(targetRole || 'admin');
     }
 
     function closeLoginModal() {
       document.getElementById('loginModal').classList.add('hidden');
-      pendingLoginRole = null;
     }
 
     function submitLogin() {
       const entered = document.getElementById('loginPasswordInput').value.trim();
       const err = document.getElementById('loginErrorMsg');
 
-      if (pendingLoginRole === 'admin') {
-        if (entered === ADMIN_PASSWORD) {
-          applyRole('admin');
-          closeLoginModal();
-        } else {
-          err.classList.remove('hidden');
-        }
+      // فوری پاسورڈ شناخت (Direct instant check)
+      if (entered === ADMIN_PASSWORD) {
+        applyRole('admin');
+        closeLoginModal();
+        return;
+      }
+      if (entered === TENANT_PASSWORD) {
+        applyRole('tenant');
+        closeLoginModal();
+        return;
+      }
+
+      // ورنہ منتخب کردہ موڈ کے تحت تصدیق
+      if (pendingLoginRole === 'admin' && entered === ADMIN_PASSWORD) {
+        applyRole('admin');
+        closeLoginModal();
+      } else if (pendingLoginRole === 'tenant' && entered === TENANT_PASSWORD) {
+        applyRole('tenant');
+        closeLoginModal();
       } else {
-        if (entered === TENANT_PASSWORD) {
-          applyRole('tenant');
-          closeLoginModal();
-        } else {
-          err.classList.remove('hidden');
-        }
+        err.classList.remove('hidden');
       }
     }
 
@@ -1137,25 +1174,56 @@
       if (e.key === 'Enter') submitLogin();
     });
 
+    function logoutUser() {
+      localStorage.removeItem('active_user_role');
+      sessionStorage.removeItem('active_user_role');
+      applyRole('logged_out');
+      promptLogin('admin');
+
+      const toast = document.getElementById('saveToast');
+      const toastText = document.getElementById('saveToastText');
+      toastText.innerHTML = `<i class="fa-solid fa-right-from-bracket ml-1 text-amber-300"></i> آپ لاگ آؤٹ ہو چکے ہیں۔ دوبارہ لاگ ان کریں!`;
+      toast.classList.remove('hidden');
+      setTimeout(() => toast.classList.add('hidden'), 3000);
+    }
+
     function applyRole(role) {
       if (role === 'owner') role = 'admin';
       currentRole = role;
-      localStorage.setItem('active_user_role', role);
 
       const adminBtn = document.getElementById('roleBtnAdmin');
       const tenantBtn = document.getElementById('roleBtnTenant');
+      const logoutBtn = document.getElementById('btnLogout');
+      const adminLabel = document.getElementById('adminBtnLabel');
+      const tenantLabel = document.getElementById('tenantBtnLabel');
       const whatsAppBtnText = document.getElementById('whatsAppBtnText');
 
       if (role === 'admin') {
-        document.body.classList.remove('tenant-mode');
-        adminBtn.className = "px-3 py-1.5 rounded-lg font-extrabold transition bg-amber-400 text-slate-900 shadow-sm flex items-center gap-1.5";
-        tenantBtn.className = "px-3 py-1.5 rounded-lg font-extrabold transition text-emerald-200 hover:text-white flex items-center gap-1.5";
+        document.body.classList.remove('tenant-mode', 'logged-out-mode');
+        adminBtn.className = "px-2.5 sm:px-3 py-1.5 rounded-lg font-extrabold transition bg-amber-400 text-slate-900 shadow-sm flex items-center gap-1.5";
+        tenantBtn.className = "px-2.5 sm:px-3 py-1.5 rounded-lg font-extrabold transition text-emerald-200 hover:text-white flex items-center gap-1.5";
+        if (adminLabel) adminLabel.innerText = "ایڈمن اکاؤنٹ";
+        if (tenantLabel) tenantLabel.innerText = "کرائے دار اکاؤنٹ";
+        if (logoutBtn) logoutBtn.classList.remove('hidden');
         whatsAppBtnText.innerText = "واٹس ایپ پر بل شیئر کریں";
-      } else {
+      } else if (role === 'tenant') {
         document.body.classList.add('tenant-mode');
-        tenantBtn.className = "px-3 py-1.5 rounded-lg font-extrabold transition bg-emerald-400 text-slate-900 shadow-sm flex items-center gap-1.5";
-        adminBtn.className = "px-3 py-1.5 rounded-lg font-extrabold transition text-emerald-200 hover:text-white flex items-center gap-1.5";
+        document.body.classList.remove('logged-out-mode');
+        tenantBtn.className = "px-2.5 sm:px-3 py-1.5 rounded-lg font-extrabold transition bg-emerald-400 text-slate-900 shadow-sm flex items-center gap-1.5";
+        adminBtn.className = "px-2.5 sm:px-3 py-1.5 rounded-lg font-extrabold transition text-emerald-200 hover:text-white flex items-center gap-1.5";
+        if (adminLabel) adminLabel.innerText = "ایڈمن اکاؤنٹ";
+        if (tenantLabel) tenantLabel.innerText = "کرائے دار اکاؤنٹ";
+        if (logoutBtn) logoutBtn.classList.remove('hidden');
         whatsAppBtnText.innerText = "ایڈمن سے واٹس ایپ پر رابطہ کریں";
+      } else {
+        // logged_out
+        document.body.classList.add('tenant-mode', 'logged-out-mode');
+        adminBtn.className = "px-2.5 sm:px-3 py-1.5 rounded-lg font-extrabold transition text-emerald-200 hover:text-white flex items-center gap-1.5";
+        tenantBtn.className = "px-2.5 sm:px-3 py-1.5 rounded-lg font-extrabold transition text-emerald-200 hover:text-white flex items-center gap-1.5";
+        if (adminLabel) adminLabel.innerText = "ایڈمن لاگ ان";
+        if (tenantLabel) tenantLabel.innerText = "کرائے دار لاگ ان";
+        if (logoutBtn) logoutBtn.classList.add('hidden');
+        whatsAppBtnText.innerText = "واٹس ایپ پر بل شیئر کریں";
       }
 
       renderSavedBillsTable();
@@ -2068,10 +2136,11 @@
       dlAnchor.remove();
     }
 
-    // ابتدائی لوڈ
+    // ابتدائی لوڈ (ہر دفعہ ایپ آن ہونے پر لاگ آؤٹ اور لاگ ان ونڈو لازماً کھلے گی)
     window.addEventListener('DOMContentLoaded', () => {
       loadSavedReferenceNumbers();
-      applyRole(currentRole);
+      applyRole('logged_out');
+      promptLogin('admin');
       onMonthOrYearChanged();
       calculateAll();
 
