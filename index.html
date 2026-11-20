@@ -4,6 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>رینٹل سب میٹر اینڈ بلنگ مینیجر | Rental Billing Portal</title>
+
+  <!-- سیکیورٹی: ایپ ہر دفعہ لاگ آؤٹ اور مکمل لاک پوزیشن میں کھلے گی -->
+  <script>
+    try {
+      localStorage.removeItem('active_user_role');
+      sessionStorage.removeItem('active_user_role');
+    } catch(e) {}
+  </script>
   
   <!-- PWA Manifest & App Icons (Using user's APP ICON.jpg) -->
   <link rel="manifest" href="./manifest.json">
@@ -118,7 +126,7 @@
     }
   </style>
 </head>
-<body class="bg-slate-100/90 text-slate-800 antialiased min-h-screen pb-20">
+<body class="bg-slate-100/90 text-slate-800 antialiased min-h-screen pb-20 logged-out-mode tenant-mode">
 
   <!-- ================= ٹاپ ہیڈر مع اکاؤنٹ سوئچر ================= -->
   <header class="bg-emerald-900 text-white shadow-md sticky top-0 z-40 border-b border-emerald-800">
@@ -884,8 +892,8 @@
     </div>
   </div>
 
-  <!-- ================= موڈل 1: پاسورڈ لاگ ان موڈل ================= -->
-  <div id="loginModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+  <!-- ================= موڈل 1: پاسورڈ لاگ ان موڈل (ڈیفالٹ اوپن برائے سیکیورٹی) ================= -->
+  <div id="loginModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
     <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 space-y-4">
       <div class="text-center space-y-1">
         <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center text-xl mx-auto shadow-inner">
@@ -2057,8 +2065,11 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js')
-          .then(reg => console.log('[PWA] ServiceWorker registered:', reg.scope))
+        navigator.serviceWorker.register('./sw.js?v=3')
+          .then(reg => {
+            console.log('[PWA] ServiceWorker registered v3:', reg.scope);
+            reg.update();
+          })
           .catch(err => console.log('[PWA] ServiceWorker registration failed:', err));
       });
     }
